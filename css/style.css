@@ -1,0 +1,292 @@
+@layer base, layout, componentes, utilidades;
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+
+    /* Cromática complementaria: azul (--tono) frente a naranja (--tono + 180) */
+    --tono: 210;
+    --tono-secundario: calc(var(--tono) + 180);
+
+    --color-fondo: hsl(var(--tono), 30%, 97%);
+    --color-superficie: hsl(var(--tono), 40%, 100%);
+    --color-texto: hsl(var(--tono), 10%, 20%);
+    --color-texto-suave: hsl(var(--tono), 10%, 38%);
+    --color-borde: hsl(var(--tono), 15%, 50%);
+    --color-primario: hsl(var(--tono), 70%, 35%);
+    --color-secundario: hsl(var(--tono-secundario), 70%, 35%);
+    --color-secundario-hover: hsl(var(--tono-secundario), 70%, 28%);
+    --color-secundario-texto: hsl(var(--tono-secundario), 70%, 97%);
+
+    --fuente-titulo: "Lora", Georgia, serif;
+    --fuente-cuerpo: "Inter", system-ui, sans-serif;
+
+    --texto-pequeno: 0.875rem;
+    --texto-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --texto-campo: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+    --texto-marcador: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
+    --texto-titulo: clamp(2rem, 1.5rem + 2.5vw, 3.25rem);
+    --texto-palabra: clamp(2.5rem, 1.5rem + 5vw, 4.5rem);
+
+    --espacio-xs: 0.25rem;
+    --espacio-s: 0.5rem;
+    --espacio-m: 1rem;
+    --espacio-l: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    --espacio-xl: clamp(2rem, 1.5rem + 3vw, 4rem);
+
+    --radio: 0.75rem;
+    --ancho-max: 40rem;
+    --duracion-acierto: 250ms;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-fondo: hsl(var(--tono), 25%, 11%);
+      --color-superficie: hsl(var(--tono), 22%, 16%);
+      --color-texto: hsl(var(--tono), 20%, 92%);
+      --color-texto-suave: hsl(var(--tono), 12%, 72%);
+      --color-borde: hsl(var(--tono), 15%, 60%);
+      --color-primario: hsl(var(--tono), 80%, 75%);
+      --color-secundario: hsl(var(--tono-secundario), 80%, 65%);
+      --color-secundario-hover: hsl(var(--tono-secundario), 80%, 72%);
+      --color-secundario-texto: hsl(var(--tono-secundario), 60%, 12%);
+    }
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-block-size: 100vh;
+    min-block-size: 100dvh;
+    font-family: var(--fuente-cuerpo);
+    font-size: var(--texto-base);
+    line-height: 1.5;
+    color: var(--color-texto);
+    background-color: var(--color-fondo);
+  }
+
+  h1,
+  h2 {
+    margin: 0;
+    font-family: var(--fuente-titulo);
+    line-height: 1.1;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-primario);
+    outline-offset: 3px;
+  }
+}
+
+@layer layout {
+  body {
+    display: grid;
+    place-items: center;
+    padding: var(--espacio-l) var(--espacio-m);
+  }
+
+  .app {
+    display: grid;
+    gap: var(--espacio-xl);
+    inline-size: min(100%, var(--ancho-max));
+  }
+
+  .marcadores {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--espacio-m);
+  }
+
+  .entrada {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "etiqueta etiqueta"
+      "campo    boton"
+      "ayuda    ayuda";
+    gap: var(--espacio-s) var(--espacio-m);
+  }
+
+  .entrada__etiqueta { grid-area: etiqueta; }
+  .entrada__campo    { grid-area: campo; }
+  .entrada__ayuda    { grid-area: ayuda; }
+  .entrada .boton    { grid-area: boton; }
+}
+
+@layer componentes {
+  .cabecera {
+    display: grid;
+    gap: var(--espacio-xs);
+    text-align: center;
+  }
+
+  .cabecera__titulo {
+    font-size: var(--texto-titulo);
+    font-weight: 700;
+    color: var(--color-primario);
+  }
+
+  .cabecera__subtitulo {
+    color: var(--color-texto-suave);
+  }
+
+  .marcador {
+    display: grid;
+    gap: var(--espacio-xs);
+    padding: var(--espacio-m);
+    text-align: center;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio);
+  }
+
+  .marcador__etiqueta,
+  .muestra__titulo,
+  .entrada__etiqueta {
+    font-family: var(--fuente-cuerpo);
+    font-size: var(--texto-pequeno);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-texto-suave);
+  }
+
+  .marcador__valor {
+    font-family: var(--fuente-titulo);
+    font-size: var(--texto-marcador);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primario);
+  }
+
+  .muestra {
+    display: grid;
+    gap: var(--espacio-s);
+    text-align: center;
+  }
+
+  .muestra__palabra {
+    min-block-size: 1.2em;
+    font-family: var(--fuente-titulo);
+    font-size: var(--texto-palabra);
+    font-weight: 700;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+    color: var(--color-primario);
+  }
+
+  .app[data-estado="parado"] .muestra__palabra {
+    color: var(--color-texto-suave);
+  }
+
+  .muestra__palabra--acierto {
+    animation: acierto var(--duracion-acierto) ease-out;
+  }
+
+  @keyframes acierto {
+    from {
+      transform: scale(1.12);
+      color: var(--color-secundario);
+    }
+  }
+
+  .entrada__campo {
+    inline-size: 100%;
+    padding: var(--espacio-s) var(--espacio-m);
+    font-size: var(--texto-campo);
+    color: var(--color-texto);
+    background-color: var(--color-superficie);
+    border: 2px solid var(--color-borde);
+    border-radius: var(--radio);
+  }
+
+  .entrada__campo[aria-invalid="true"] {
+    border-color: var(--color-secundario);
+  }
+
+  .entrada__campo:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .entrada__ayuda {
+    font-size: var(--texto-pequeno);
+    color: var(--color-texto-suave);
+  }
+
+  .entrada__campo[aria-invalid="true"] ~ .entrada__ayuda {
+    font-weight: 600;
+    color: var(--color-secundario);
+  }
+
+  .boton {
+    min-inline-size: 9ch;
+    padding: var(--espacio-s) var(--espacio-l);
+    font-weight: 600;
+    color: var(--color-secundario-texto);
+    background-color: var(--color-secundario);
+    border: 2px solid var(--color-secundario);
+    border-radius: var(--radio);
+    cursor: pointer;
+  }
+
+  .boton:hover:not(:disabled) {
+    background-color: var(--color-secundario-hover);
+    border-color: var(--color-secundario-hover);
+  }
+
+  /* En marcha el botón pasa a contorno: misma forma (semejanza), distinto peso visual */
+  .app[data-estado="activo"] .boton {
+    color: var(--color-secundario);
+    background-color: transparent;
+  }
+
+  .app[data-estado="activo"] .boton:hover {
+    color: var(--color-secundario-texto);
+  }
+
+  .boton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .estado {
+    min-block-size: 1.5em;
+    text-align: center;
+    color: var(--color-texto-suave);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .muestra__palabra--acierto {
+      animation: none;
+    }
+  }
+}
+
+@layer utilidades {
+  .visualmente-oculto {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}
