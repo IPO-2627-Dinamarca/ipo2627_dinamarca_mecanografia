@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Mecanografía · Test de velocidad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lora:wght@600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/Controlador.js"></script>
+</head>
+<body>
+  <main class="app" id="app" data-estado="parado">
+    <header class="cabecera">
+      <h1 class="cabecera__titulo">Mecanografía</h1>
+      <p class="cabecera__subtitulo">¿Cuántas palabras eres capaz de teclear sin fallar?</p>
+    </header>
+
+    <section class="marcadores" aria-labelledby="titulo-marcadores">
+      <h2 class="visualmente-oculto" id="titulo-marcadores">Marcadores</h2>
+      <div class="marcador">
+        <label class="marcador__etiqueta" for="contador">Correctas</label>
+        <output class="marcador__valor" id="contador">0</output>
+      </div>
+      <div class="marcador">
+        <label class="marcador__etiqueta" for="tiempo">Segundos</label>
+        <output class="marcador__valor" id="tiempo" aria-live="off">0</output>
+      </div>
+    </section>
+
+    <section class="muestra" aria-labelledby="titulo-muestra">
+      <h2 class="muestra__titulo" id="titulo-muestra">Palabra de muestra</h2>
+      <p class="muestra__palabra" id="palabra" aria-live="polite">¿Preparado?</p>
+    </section>
+
+    <section class="entrada" aria-label="Tu respuesta">
+      <label class="entrada__etiqueta" for="entrada">Escribe la palabra</label>
+      <input class="entrada__campo" id="entrada" type="text"
+             autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
+             enterkeyhint="next" aria-describedby="ayuda" aria-invalid="false" disabled>
+      <button class="boton" id="boton" type="button" disabled>Iniciar</button>
+      <p class="entrada__ayuda" id="ayuda" aria-live="polite">Pulsa Espacio o Intro para comprobar y Esc para detener.</p>
+    </section>
+
+    <p class="estado" id="estado" role="status">Cargando palabras…</p>
+  </main>
+</body>
+</html>
