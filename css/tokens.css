@@ -1,0 +1,65 @@
+/* Orden de las capas para toda la hoja: cada fichero solo rellena la suya. */
+@layer tokens, base, layout, componentes, utilidades;
+
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* Complementaria con acento análogo: azul para la acción, su opuesto (+180°) para el
+       error y un verde análogo del azul (−60°) para el acierto. */
+    --tono: 212;
+    --tono-complementario: calc(var(--tono) + 180);
+    --tono-exito: calc(var(--tono) - 60);
+
+    --fondo: light-dark(hsl(var(--tono) 30% 97%), hsl(var(--tono) 25% 10%));
+    --superficie: light-dark(hsl(var(--tono) 40% 100%), hsl(var(--tono) 22% 15%));
+    --texto: light-dark(hsl(var(--tono) 30% 14%), hsl(var(--tono) 30% 92%));
+    --texto-suave: light-dark(hsl(var(--tono) 12% 38%), hsl(var(--tono) 12% 70%));
+    --borde: light-dark(hsl(var(--tono) 15% 52%), hsl(var(--tono) 12% 50%)); /* ≥ 3:1, para controles */
+    --borde-suave: color-mix(in oklab, var(--borde) 40%, transparent); /* solo separa tarjetas */
+
+    --accion: light-dark(hsl(var(--tono) 75% 40%), hsl(var(--tono) 90% 72%));
+    --accion-intensa: light-dark(hsl(var(--tono) 80% 32%), hsl(var(--tono) 95% 80%));
+    --sobre-accion: light-dark(hsl(var(--tono) 40% 99%), hsl(var(--tono) 50% 10%));
+    --tinte-accion: color-mix(in oklab, var(--accion) 14%, transparent);
+
+    --error: light-dark(hsl(var(--tono-complementario) 90% 32%), hsl(var(--tono-complementario) 95% 62%));
+    --tinte-error: light-dark(hsl(var(--tono-complementario) 90% 96%), hsl(var(--tono-complementario) 45% 17%));
+    --exito: light-dark(hsl(var(--tono-exito) 75% 26%), hsl(var(--tono-exito) 60% 60%));
+
+    /* Tipografía: serif para lo que se lee como palabra, sans de sistema para la interfaz */
+    --fuente-display: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+    --fuente-interfaz: system-ui, "Segoe UI", Roboto, sans-serif;
+
+    --razon: 1.25; /* tercera mayor */
+    --paso--1: calc(1rem / var(--razon));
+    --paso-0: 1rem;
+    --paso-1: calc(var(--paso-0) * var(--razon));
+    --paso-2: calc(var(--paso-1) * var(--razon));
+    --paso-3: calc(var(--paso-2) * var(--razon));
+    --paso-4: calc(var(--paso-3) * var(--razon));
+    --paso-5: calc(var(--paso-4) * var(--razon));
+    --paso-6: calc(var(--paso-5) * var(--razon));
+
+    --peso-normal: 400;
+    --peso-medio: 600;
+    --peso-fuerte: 700;
+    --interlineado: 1.5;
+    --interlineado-ajustado: 1.15;
+
+    /* Espacio: escala en rem; solo el exterior crece con la ventana */
+    --espacio-1: 0.25rem;
+    --espacio-2: 0.5rem;
+    --espacio-3: 1rem;
+    --espacio-4: 1.5rem;
+    --espacio-5: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+
+    --radio: 0.75rem;
+    --radio-pequeno: 0.375rem;
+    --anillo: 3px;
+    --control: 3rem; /* alto mínimo de campo y botón: objetivo táctil holgado */
+    --ancho-columna: 40rem;
+    --medida: 60ch;
+    --duracion: 150ms;
+  }
+}
