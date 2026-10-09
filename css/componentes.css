@@ -1,0 +1,388 @@
+@layer componentes {
+  /* Cabecera y pie */
+
+  .cabecera {
+    text-align: center;
+  }
+
+  .cabecera__titulo {
+    font-size: clamp(var(--paso-4), 1.5rem + 2.5vw, var(--paso-5));
+    font-weight: var(--peso-fuerte);
+  }
+
+  .cabecera__lema {
+    max-inline-size: var(--medida);
+    margin-inline: auto;
+    color: var(--texto-suave);
+    text-wrap: balance;
+  }
+
+  .pie {
+    font-size: var(--paso--1);
+    text-align: center;
+    color: var(--texto-suave);
+  }
+
+  /* Marcadores: tres tarjetas iguales (semejanza) */
+
+  .marcador {
+    padding: var(--espacio-3) var(--espacio-2);
+    text-align: center;
+    background-color: var(--superficie);
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio);
+  }
+
+  .marcador__etiqueta {
+    font-size: var(--paso--1);
+    font-weight: var(--peso-medio);
+    color: var(--texto-suave);
+
+    & abbr {
+      text-decoration: none;
+    }
+  }
+
+  .marcador__valor {
+    font-size: var(--paso-3);
+    font-weight: var(--peso-medio);
+    line-height: var(--interlineado-ajustado);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .marcador__valor--acierto {
+    animation: destello 600ms ease-out;
+  }
+
+  @keyframes destello {
+    from { color: var(--exito); }
+  }
+
+  /* Al detener, el panel de resultado ya incluye estos datos */
+  .principal:has(.resultado:not([hidden])) .marcadores {
+    display: none;
+  }
+
+  /* Escenario: la palabra o el resultado sobre una superficie más clara que el fondo */
+
+  .escenario {
+    padding: var(--espacio-4) var(--espacio-3);
+    background-color: var(--superficie);
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio);
+  }
+
+  /* --letras lo fija la vista: cuanto más larga la palabra, menor el cuerpo, para que quepa en una línea */
+  .muestra {
+    font-family: var(--fuente-display);
+    font-size: clamp(var(--paso-3), calc(140cqi / var(--letras, 6)), var(--paso-6));
+    font-weight: var(--peso-medio);
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    text-align: center;
+    overflow-wrap: anywhere;
+
+    .app:not([data-estado="activo"]) & {
+      font-size: var(--paso-3);
+      font-style: italic;
+      color: var(--texto-suave);
+    }
+
+    .app[data-estado="error"] & {
+      display: none;
+    }
+  }
+
+  .letra--ok {
+    color: var(--exito);
+  }
+
+  /* Además del color: subrayado ondulado en la letra errónea y tachado en lo que sobra */
+  .letra--error,
+  .letra--sobrante {
+    color: var(--error);
+    text-decoration: underline wavy;
+    text-decoration-thickness: 0.06em;
+    text-decoration-skip-ink: none;
+    text-underline-offset: 0.18em;
+  }
+
+  .letra--sobrante {
+    text-decoration-line: line-through;
+  }
+
+  /* Cursor fijo, sin parpadeo; sin saltos en letras con descendente (g, p, q) */
+  .letra--cursor {
+    text-decoration: underline solid var(--accion);
+    text-decoration-thickness: 0.08em;
+    text-decoration-skip-ink: none;
+    text-underline-offset: 0.18em;
+  }
+
+  .aviso {
+    max-inline-size: var(--medida);
+    padding-inline-start: var(--espacio-3);
+    border-inline-start: var(--anillo) solid var(--error);
+
+    .app:not([data-estado="error"]) & {
+      display: none;
+    }
+  }
+
+  .app[data-estado="error"] .controles {
+    display: none;
+  }
+
+  /* Resultado */
+
+  .resultado {
+    text-align: center;
+  }
+
+  .resultado__titulo {
+    font-size: var(--paso--1);
+    font-weight: var(--peso-medio);
+    color: var(--texto-suave);
+  }
+
+  .resultado__ppm {
+    font-family: var(--fuente-display);
+    font-size: var(--paso-6);
+    font-weight: var(--peso-fuerte);
+    line-height: 1;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  .resultado__unidad {
+    color: var(--texto-suave);
+  }
+
+  .resultado__datos {
+    padding-block-start: var(--espacio-3);
+    border-block-start: 1px solid var(--borde-suave);
+  }
+
+  .resultado__datos dt {
+    font-size: var(--paso--1);
+    color: var(--texto-suave);
+  }
+
+  .resultado__datos dd {
+    font-size: var(--paso-1);
+    font-weight: var(--peso-medio);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .resultado__record {
+    padding: var(--espacio-1) var(--espacio-3);
+    font-weight: var(--peso-medio);
+    color: var(--exito);
+    border: 1px solid currentColor;
+    border-radius: 999px;
+  }
+
+  /* Campo */
+
+  .controles__etiqueta {
+    font-size: var(--paso--1);
+    font-weight: var(--peso-medio);
+    color: var(--texto-suave);
+  }
+
+  /* Misma fuente y alineación que la muestra para comparar letra a letra. El foco se marca
+     engrosando el borde, así con error se ve un solo anillo. */
+  .campo {
+    --_anillo: var(--accion);
+
+    inline-size: 100%;
+    min-block-size: var(--control);
+    padding: var(--espacio-2) var(--espacio-3);
+    font-family: var(--fuente-display);
+    font-size: var(--paso-2);
+    text-align: center;
+    background-color: var(--superficie);
+    border: 2px solid var(--borde);
+    border-radius: var(--radio);
+    caret-color: var(--_anillo);
+
+    &:focus-visible {
+      outline: none;
+      border-color: var(--_anillo);
+      box-shadow: 0 0 0 1px var(--_anillo);
+    }
+
+    &:disabled {
+      background-color: transparent;
+      border-style: dashed;
+      cursor: not-allowed;
+    }
+
+    &[aria-invalid="true"] {
+      --_anillo: var(--error);
+
+      background-color: var(--tinte-error);
+      border-color: var(--error);
+    }
+  }
+
+  .controles__error {
+    font-size: var(--paso--1);
+    font-weight: var(--peso-medio);
+    text-align: center;
+    color: var(--error);
+    visibility: hidden; /* reserva su línea para que nada salte al aparecer */
+
+    .prueba:has(.campo[aria-invalid="true"]) & {
+      visibility: visible;
+    }
+
+    .app:not([data-estado="activo"]) & {
+      display: none;
+    }
+  }
+
+  /* Ayuda según el estado */
+
+  .ayuda {
+    font-size: var(--paso--1);
+    text-align: center;
+    color: var(--texto-suave);
+  }
+
+  .app:not([data-estado="parado"]) .ayuda--parado,
+  .app:not([data-estado="activo"]) .ayuda--activo {
+    display: none;
+  }
+
+  kbd {
+    padding: 0.05em 0.4em;
+    font-family: var(--fuente-interfaz);
+    font-size: 0.9em;
+    font-weight: var(--peso-medio);
+    white-space: nowrap;
+    color: var(--texto);
+    background-color: var(--superficie);
+    border: 1px solid var(--borde);
+    border-block-end-width: 2px;
+    border-radius: var(--radio-pequeno);
+  }
+
+  /* Botón: los estados solo cambian variables locales y no compiten en especificidad */
+
+  .boton {
+    --_fondo: var(--accion);
+    --_tinta: var(--sobre-accion);
+
+    min-block-size: var(--control);
+    min-inline-size: 10ch;
+    padding: var(--espacio-2) var(--espacio-4);
+    font-weight: var(--peso-medio);
+    color: var(--_tinta);
+    background-color: var(--_fondo);
+    border: 2px solid var(--accion);
+    border-radius: var(--radio);
+    cursor: pointer;
+
+    &::before {
+      content: "";
+      inline-size: 0.7em;
+      block-size: 0.7em;
+      background-color: currentColor;
+      clip-path: polygon(0 0, 100% 50%, 100% 50%, 0 100%);
+    }
+
+    &:hover:not(:disabled) {
+      --_fondo: var(--accion-intensa);
+    }
+
+    &:disabled {
+      --_fondo: transparent;
+      --_tinta: var(--texto-suave);
+      border-color: var(--borde);
+      border-style: dashed;
+      cursor: not-allowed;
+    }
+  }
+
+  /* En marcha pasa a contorno: misma forma (semejanza) y menos peso que el campo */
+  .app[data-estado="activo"] .boton {
+    --_fondo: transparent;
+    --_tinta: var(--accion);
+
+    &::before {
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+
+    &:hover {
+      --_fondo: var(--tinte-accion);
+    }
+  }
+
+  /* Con el teclado virtual abierto la ventana encoge (interactive-widget=resizes-content);
+     durante la prueba se retira lo accesorio para que palabra y campo sigan a la vista. */
+  @media (height < 34rem) {
+    .app[data-estado="activo"] {
+      padding-block: var(--espacio-2);
+
+      & .cabecera,
+      & .pie,
+      & .ayuda {
+        display: none;
+      }
+
+      & .principal {
+        gap: var(--espacio-2);
+      }
+
+      & .marcador {
+        padding-block: var(--espacio-1);
+      }
+
+      & .marcador__valor {
+        font-size: var(--paso-2);
+      }
+
+      & .escenario {
+        min-block-size: 0;
+        padding-block: var(--espacio-2);
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .campo,
+    .boton {
+      transition: background-color var(--duracion), border-color var(--duracion), color var(--duracion);
+    }
+
+    .boton::before {
+      transition: clip-path var(--duracion);
+    }
+  }
+
+  /* Alto contraste del sistema: el error se marca con los colores de resaltado */
+
+  @media (forced-colors: active) {
+    .letra--error,
+    .letra--sobrante {
+      forced-colors-adjust: none;
+      color: MarkText;
+      background-color: Mark;
+    }
+
+    .boton::before {
+      forced-colors-adjust: none;
+      background-color: ButtonText;
+    }
+
+    /* box-shadow desaparece en este modo */
+    .campo:focus-visible {
+      outline: var(--anillo) solid Highlight;
+    }
+
+    .campo[aria-invalid="true"] {
+      border-style: double;
+      border-width: 4px;
+    }
+  }
+}
