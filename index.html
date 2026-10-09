@@ -2,49 +2,108 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
   <title>Mecanografía · Test de velocidad</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lora:wght@600;700&display=swap">
-  <link rel="stylesheet" href="css/style.css">
-  <script type="module" src="js/Controlador.js"></script>
+  <meta name="description" content="Test de velocidad de mecanografía: teclea palabras al azar y mide tus palabras por minuto y tu precisión.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#131920" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/componentes.css">
+
+  <script type="module" src="js/main.js"></script>
 </head>
 <body>
-  <main class="app" id="app" data-estado="parado">
+  <!-- Arranca en estado de error: si el módulo no llega a ejecutarse (sin JavaScript o
+       abierto con file://), queda a la vista el aviso estático. main.js lo cambia al cargar. -->
+  <div class="app" data-estado="error" data-vista="app">
     <header class="cabecera">
       <h1 class="cabecera__titulo">Mecanografía</h1>
-      <p class="cabecera__subtitulo">¿Cuántas palabras eres capaz de teclear sin fallar?</p>
+      <p class="cabecera__lema">Escribe la palabra que aparece: si la completas sin errores, suma una y sale otra.</p>
     </header>
 
-    <section class="marcadores" aria-labelledby="titulo-marcadores">
-      <h2 class="visualmente-oculto" id="titulo-marcadores">Marcadores</h2>
-      <div class="marcador">
-        <label class="marcador__etiqueta" for="contador">Correctas</label>
-        <output class="marcador__valor" id="contador">0</output>
-      </div>
-      <div class="marcador">
-        <label class="marcador__etiqueta" for="tiempo">Segundos</label>
-        <output class="marcador__valor" id="tiempo" aria-live="off">0</output>
-      </div>
-    </section>
+    <main class="principal">
+      <h2 class="visualmente-oculto">Marcadores</h2>
+      <dl class="marcadores">
+        <div class="marcador">
+          <dt class="marcador__etiqueta">Correctas</dt>
+          <dd class="marcador__valor" data-vista="correctas">0</dd>
+        </div>
+        <div class="marcador">
+          <dt class="marcador__etiqueta">Segundos</dt>
+          <dd class="marcador__valor" data-vista="segundos">0</dd>
+        </div>
+        <div class="marcador">
+          <dt class="marcador__etiqueta"><abbr title="Palabras por minuto">PPM</abbr></dt>
+          <dd class="marcador__valor" data-vista="ppm">—</dd>
+        </div>
+      </dl>
 
-    <section class="muestra" aria-labelledby="titulo-muestra">
-      <h2 class="muestra__titulo" id="titulo-muestra">Palabra de muestra</h2>
-      <p class="muestra__palabra" id="palabra" aria-live="polite">¿Preparado?</p>
-    </section>
+      <section class="prueba" aria-labelledby="prueba-titulo">
+        <h2 class="visualmente-oculto" id="prueba-titulo">Prueba</h2>
 
-    <section class="entrada" aria-label="Tu respuesta">
-      <label class="entrada__etiqueta" for="entrada">Escribe la palabra</label>
-      <input class="entrada__campo" id="entrada" type="text"
-             autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
-             enterkeyhint="next" aria-describedby="ayuda" aria-invalid="false" disabled>
-      <button class="boton" id="boton" type="button" disabled>Iniciar</button>
-      <p class="entrada__ayuda" id="ayuda" aria-live="polite">Pulsa Espacio o Intro para comprobar y Esc para detener.</p>
-    </section>
+        <div class="escenario">
+          <p class="muestra" data-vista="palabra">Cargando palabras…</p>
 
-    <p class="estado" id="estado" role="status">Cargando palabras…</p>
-  </main>
+          <section class="resultado" data-vista="resultado" aria-labelledby="resultado-titulo" hidden>
+            <h3 class="resultado__titulo" id="resultado-titulo">Resultado</h3>
+            <p class="resultado__principal">
+              <span class="resultado__ppm" data-vista="resultado-ppm">0</span>
+              <span class="resultado__unidad">palabras por minuto</span>
+            </p>
+            <dl class="resultado__datos">
+              <div>
+                <dt>Correctas</dt>
+                <dd data-vista="resultado-correctas">0</dd>
+              </div>
+              <div>
+                <dt>Tiempo</dt>
+                <dd data-vista="resultado-tiempo">0 s</dd>
+              </div>
+              <div>
+                <dt>Precisión</dt>
+                <dd data-vista="resultado-precision">—</dd>
+              </div>
+              <div>
+                <dt>Mejor marca</dt>
+                <dd data-vista="resultado-marca">—</dd>
+              </div>
+            </dl>
+            <p class="resultado__record" data-vista="resultado-record" hidden>Nueva mejor marca</p>
+          </section>
+
+          <p class="aviso" data-vista="mensaje" role="alert">
+            No se ha podido iniciar la aplicación. Necesita JavaScript y, si has abierto index.html
+            directamente, servirse desde un servidor local.
+          </p>
+        </div>
+
+        <div class="controles">
+          <label class="controles__etiqueta" for="campo">Escribe la palabra</label>
+          <input class="campo" id="campo" type="text" data-vista="campo"
+                 autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
+                 enterkeyhint="next" aria-describedby="ayuda-activa" aria-errormessage="error"
+                 aria-invalid="false" disabled>
+          <button class="boton" type="button" data-vista="boton" aria-keyshortcuts="Enter" disabled>Iniciar</button>
+          <p class="controles__error" id="error">Palabra incompleta o con errores.</p>
+        </div>
+
+        <p class="ayuda ayuda--parado">Pulsa <kbd>Intro</kbd> o el botón Iniciar para empezar.</p>
+        <p class="ayuda ayuda--activo" id="ayuda-activa">
+          La palabra se acepta al completarla. <kbd>Esc</kbd> detiene la prueba.
+        </p>
+      </section>
+
+      <p class="visualmente-oculto" data-vista="anuncio" aria-live="polite"></p>
+    </main>
+
+    <footer class="pie">
+      <p>Grupo Dinamarca · IPO 2026/27</p>
+    </footer>
+  </div>
 </body>
 </html>
