@@ -1,0 +1,31 @@
+name: Sugerencia de mejora
+description: Propón una nueva funcionalidad o cambio en el diseño
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: ¿Qué problema resolvería?
+      description: Explica el contexto o la limitación actual.
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Solución propuesta
+      description: Describe la mejora. Incluye bocetos o referencias si los tienes.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área afectada
+      multiple: true
+      options:
+        - HTML / Semántica
+        - CSS / Diseño visual
+        - Mecánica del juego
+        - Almacén de palabras
+        - Estadísticas / Resultados
+        - Accesibilidad
+        - Rendimiento
