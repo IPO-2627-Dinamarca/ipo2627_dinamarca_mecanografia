@@ -1,0 +1,53 @@
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--fuente-interfaz);
+    font-size: var(--paso-0);
+    font-weight: var(--peso-normal);
+    line-height: var(--interlineado);
+    color: var(--texto);
+    background-color: var(--fondo);
+  }
+
+  h1, h2, h3, p, dl, dd {
+    margin: 0;
+  }
+
+  h1 {
+    font-family: var(--fuente-display);
+    line-height: var(--interlineado-ajustado);
+  }
+
+  button,
+  input {
+    font: inherit;
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: var(--anillo) solid var(--accion);
+    outline-offset: 2px;
+  }
+
+  /* Los componentes fijan display y anularían el atributo */
+  [hidden] {
+    display: none !important;
+  }
+}
+
+@layer utilidades {
+  .visualmente-oculto {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
