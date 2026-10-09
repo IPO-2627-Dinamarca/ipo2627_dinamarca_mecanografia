@@ -1,0 +1,56 @@
+name: Informe de error
+description: Algo no funciona como se espera
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por tomarte el tiempo de reportar un problema.
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción
+      description: ¿Qué ocurre? ¿Qué esperabas que ocurriera?
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: |
+        1. Abrir la página en…
+        2. Pulsar Iniciar
+        3. Escribir la palabra…
+        4. Ver el error
+    validations:
+      required: true
+  - type: dropdown
+    id: navegador
+    attributes:
+      label: Navegador
+      options:
+        - Chrome / Chromium
+        - Firefox
+        - Safari
+        - Edge
+        - Otro
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área del error
+      multiple: true
+      options:
+        - Temporizador
+        - Validación de palabras
+        - Contador de aciertos
+        - Botón Iniciar / Detener
+        - Resumen final
+        - Diseño / maquetación
+        - Accesibilidad
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto adicional
+      description: Capturas de pantalla, mensajes de consola…
