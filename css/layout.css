@@ -1,0 +1,106 @@
+@layer layout {
+  /* Una columna: cabecera y prueba centradas como un solo bloque, el pie al final */
+  .app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--espacio-5);
+    min-block-size: 100dvh;
+    padding: var(--espacio-5) var(--espacio-3);
+  }
+
+  .cabecera,
+  .principal,
+  .pie {
+    inline-size: min(100%, var(--ancho-columna));
+  }
+
+  .cabecera {
+    display: grid;
+    gap: var(--espacio-2);
+    margin-block-start: auto;
+  }
+
+  /* Contenedor de consulta: la muestra y los controles se dimensionan según el ancho de la columna */
+  .principal {
+    container: principal / inline-size;
+    display: grid;
+    gap: var(--espacio-4);
+    margin-block-end: auto;
+  }
+
+  .marcadores {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--espacio-2);
+  }
+
+  .marcador {
+    display: grid;
+    gap: var(--espacio-1);
+  }
+
+  /* Proximidad: escenario, campo y ayuda van más juntos entre sí que respecto a los marcadores */
+  .prueba {
+    display: grid;
+    gap: var(--espacio-2);
+  }
+
+  .escenario {
+    display: grid;
+    place-items: center;
+    min-block-size: 9rem;
+  }
+
+  .resultado {
+    display: grid;
+    justify-items: center;
+    gap: var(--espacio-3);
+    inline-size: 100%;
+  }
+
+  .resultado__principal {
+    display: grid;
+  }
+
+  .resultado__datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    gap: var(--espacio-3);
+    inline-size: 100%;
+  }
+
+  .controles {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "etiqueta etiqueta"
+      "campo    boton"
+      "error    .";
+    gap: var(--espacio-1) var(--espacio-2);
+    margin-block-start: var(--espacio-2);
+  }
+
+  .controles__etiqueta { grid-area: etiqueta; }
+  .campo { grid-area: campo; }
+  .boton { grid-area: boton; }
+  .controles__error { grid-area: error; }
+
+  @container principal (inline-size < 24rem) {
+    .controles {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "etiqueta"
+        "campo"
+        "error"
+        "boton";
+    }
+  }
+
+  .boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espacio-2);
+  }
+}
