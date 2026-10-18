@@ -43,10 +43,18 @@
   /* Proximidad: escenario, campo y ayuda van más juntos entre sí que respecto a los marcadores */
   .prueba {
     display: grid;
+    grid-template-areas:
+      "escenario"
+      "controles"
+      "ayuda";
     gap: var(--espacio-2);
   }
 
+  /* Las dos ayudas comparten celda: mide lo que la más alta y nada se mueve al cambiar de estado */
+  .ayuda { grid-area: ayuda; }
+
   .escenario {
+    grid-area: escenario;
     display: grid;
     place-items: center;
     min-block-size: 9rem;
@@ -71,6 +79,7 @@
   }
 
   .controles {
+    grid-area: controles;
     display: grid;
     grid-template-columns: 1fr auto;
     grid-template-areas:

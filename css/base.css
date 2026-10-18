@@ -34,14 +34,14 @@
     outline: var(--anillo) solid var(--accion);
     outline-offset: 2px;
   }
-
-  /* Los componentes fijan display y anularían el atributo */
-  [hidden] {
-    display: none !important;
-  }
 }
 
 @layer utilidades {
+  /* Última capa: gana al display que fijan layout y componentes sin !important */
+  [hidden] {
+    display: none;
+  }
+
   .visualmente-oculto {
     position: absolute;
     inline-size: 1px;

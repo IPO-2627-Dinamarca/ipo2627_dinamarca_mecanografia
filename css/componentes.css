@@ -230,18 +230,14 @@
     font-weight: var(--peso-medio);
     text-align: center;
     color: var(--error);
-    visibility: hidden; /* reserva su línea para que nada salte al aparecer */
+    visibility: hidden; /* reserva su línea en todos los estados para que nada salte */
 
     .prueba:has(.campo[aria-invalid="true"]) & {
       visibility: visible;
     }
-
-    .app:not([data-estado="activo"]) & {
-      display: none;
-    }
   }
 
-  /* Ayuda según el estado */
+  /* Ayuda según el estado; visibility y no display, para que la celda conserve su alto */
 
   .ayuda {
     font-size: var(--paso--1);
@@ -251,7 +247,7 @@
 
   .app:not([data-estado="parado"]) .ayuda--parado,
   .app:not([data-estado="activo"]) .ayuda--activo {
-    display: none;
+    visibility: hidden;
   }
 
   kbd {
@@ -291,8 +287,15 @@
       clip-path: polygon(0 0, 100% 50%, 100% 50%, 0 100%);
     }
 
-    &:hover:not(:disabled) {
-      --_fondo: var(--accion-intensa);
+    /* Solo con puntero real: en táctil el hover se queda pegado tras tocar */
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        --_fondo: var(--accion-intensa);
+      }
+    }
+
+    &:active:not(:disabled) {
+      translate: 0 var(--hundimiento);
     }
 
     &:disabled {
@@ -313,8 +316,10 @@
       clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
     }
 
-    &:hover {
-      --_fondo: var(--tinte-accion);
+    @media (hover: hover) {
+      &:hover {
+        --_fondo: var(--tinte-accion);
+      }
     }
   }
 
@@ -358,6 +363,18 @@
     .boton::before {
       transition: clip-path var(--duracion);
     }
+
+    /* El resultado entra con un fundido y sube un poco */
+    .resultado {
+      transition: opacity var(--duracion) ease-out, translate var(--duracion) ease-out;
+    }
+
+    @starting-style {
+      .resultado {
+        opacity: 0;
+        translate: 0 var(--espacio-2);
+      }
+    }
   }
 
   /* Alto contraste del sistema: el error se marca con los colores de resaltado */
@@ -365,14 +382,18 @@
   @media (forced-colors: active) {
     .letra--error,
     .letra--sobrante {
-      forced-colors-adjust: none;
+      forced-color-adjust: none;
       color: MarkText;
       background-color: Mark;
     }
 
     .boton::before {
-      forced-colors-adjust: none;
+      forced-color-adjust: none;
       background-color: ButtonText;
+    }
+
+    .boton:disabled::before {
+      background-color: GrayText;
     }
 
     /* box-shadow desaparece en este modo */
