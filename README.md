@@ -50,7 +50,7 @@ ipo2627_dinamarca_mecanografia/
     └── palabras.json
 ```
 
-El HTML enlaza las cuatro hojas con `<link>` y un único `<script type="module">` hacia `main.js`; el resto de ficheros se importan entre sí con `import`. Las hojas usan `@layer`. El orden (`tokens, base, layout, componentes, utilidades`) se declara una vez en `tokens.css` y cada fichero rellena su capa: `layout` decide cómo se colocan las cajas (`display`, rejillas, `gap`) y `componentes` cómo se ven. Así la cascada depende de las capas y no hace falta subir la especificidad.
+El HTML enlaza las cuatro hojas con `<link>` y un único `<script type="module">` hacia `main.js`; el resto de ficheros se importan entre sí con `import`. Las hojas usan `@layer`. El orden (`tokens, base, layout, componentes, utilidades`) se declara una vez en `tokens.css` y cada fichero rellena su capa: `layout` decide cómo se colocan las cajas (`display`, rejillas, `gap`) y `componentes` cómo se ven. Así la cascada depende de las capas y no hace falta subir la especificidad ni usar `!important`: hasta la regla de `[hidden]` está en `utilidades`, la última capa.
 
 ## Arquitectura
 
@@ -107,6 +107,8 @@ Una sola columna de 40 rem como máximo, centrada en vertical en escritorio con 
 
 `.principal` es contenedor de consulta. Por debajo de 24 rem de ancho el botón baja bajo el campo y el mensaje de error queda entre ambos, pegado al campo. En el móvil, `interactive-widget=resizes-content` hace que el teclado virtual encoja la ventana; si queda por debajo de 34 rem de alto durante la prueba, se ocultan cabecera, pie y ayuda y se compactan los marcadores, para que la palabra, el campo y el tiempo sigan a la vista.
 
+Como el bloque está centrado en vertical, cualquier cambio de alto lo recoloca. Por eso la línea del mensaje de error queda reservada mientras se ven los controles, y las dos ayudas comparten celda en la rejilla y se alternan con `visibility`, de modo que la celda mide siempre lo que la más alta. Al pulsar Iniciar desde el estado inicial, el campo no se mueve justo cuando se va a escribir. Tras un resultado la columna sí se recoloca, porque el panel ocupa el sitio de los marcadores y de la palabra y no mide lo mismo que ellos.
+
 ## Interacción y accesibilidad
 
 - Atajos: Intro empieza, Esc detiene y cualquier letra pulsada fuera del campo durante la prueba devuelve allí el foco. Se indican con `<kbd>` en una ayuda que cambia según el estado y en `aria-keyshortcuts`.
@@ -115,6 +117,6 @@ Una sola columna de 40 rem como máximo, centrada en vertical en escritorio con 
 - Teclados: con teclas muertas se espera a `compositionend` para que la tilde suelta no cuente como fallo. Los teclados de móvil que componen la palabra entera ven el progreso mientras escriben, y el Espacio, que en ellos no informa de la tecla, se detecta en el texto.
 - El error se señala con algo más que el color: subrayado ondulado en la letra, tachado en lo que sobra, borde y fondo del campo y un mensaje escrito.
 - Una sola región viva, fuera de los spans, anuncia el comienzo, cada palabra nueva, el primer error y el resumen final. Los marcadores son un `<dl>` sin `aria-live`, para que el lector de pantalla no lea el reloj cada segundo.
-- La única animación es un destello de color en el contador al acertar. Las transiciones de color del campo y del botón y el cambio de su icono solo se aplican con `prefers-reduced-motion: no-preference`.
+- Movimiento: un destello de color en el contador al acertar y un fundido breve del resultado al detener, que entra desde `@starting-style` porque pasa de `display: none` a visible. El fundido, las transiciones de color del campo y del botón y el cambio de su icono solo se aplican con `prefers-reduced-motion: no-preference`. Al pulsarlo, el botón baja 1 px, y su *hover* solo existe con `(hover: hover)`, para que en una pantalla táctil no se quede marcado tras tocarlo.
 - `forced-colors`: las letras erróneas usan los colores de resaltado del sistema (`Mark`), el campo con error pasa a borde doble, el foco del campo usa `Highlight` y el icono del botón toma `ButtonText`.
 - Campo y botón miden al menos 48 px de alto. El foco es un anillo de 3 px; en el campo se dibuja engrosando su borde, de modo que con error se ve un solo anillo naranja.
