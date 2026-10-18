@@ -119,7 +119,7 @@ export class Vista {
 
   mostrarListo() {
     this.#cambiarEstado('parado');
-    this.#palabra.textContent = '¿Preparado?';
+    this.#palabra.textContent = '¿Empezamos?';
   }
 
   mostrarPrueba() {
