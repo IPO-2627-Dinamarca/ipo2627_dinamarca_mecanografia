@@ -57,6 +57,7 @@
     --radio: 0.75rem;
     --radio-pequeno: 0.375rem;
     --anillo: 3px;
+    --hundimiento: 1px; /* botón pulsado */
     --control: 3rem; /* alto mínimo de campo y botón: objetivo táctil holgado */
     --ancho-columna: 40rem;
     --medida: 60ch;
