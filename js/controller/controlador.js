@@ -56,8 +56,10 @@ export class Controlador {
     clearInterval(this.#intervalo);
     this.#intervalo = null;
     this.#modelo.detener();
+    // Los marcadores quedan con el valor final y no con el del último tic.
+    this.#refrescarMarcadores();
 
-    const { correctas, milisegundos, precision } = this.#modelo;
+    const { correctas, milisegundos, precision, fallosPorTecla } = this.#modelo;
     const ppm = Math.round(this.#modelo.palabrasPorMinuto);
     const record = correctas > 0 && milisegundos >= PPM_DESDE_MS && ppm > this.#mejorMarca;
     if (record) {
@@ -66,6 +68,7 @@ export class Controlador {
     }
     this.#vista.mostrarResultado({
       ppm, correctas, segundos: milisegundos / 1000, precision, mejorMarca: this.#mejorMarca, record,
+      fallos: fallosPorTecla,
     });
   }
 
