@@ -3,6 +3,21 @@ const SEGUNDOS = new Intl.NumberFormat('es', {
   style: 'unit', unit: 'second', unitDisplay: 'short', maximumFractionDigits: 1,
 });
 const PORCENTAJE = new Intl.NumberFormat('es', { style: 'percent', maximumFractionDigits: 0 });
+const LISTA = new Intl.ListFormat('es', { type: 'conjunction' });
+
+// Teclado español: la ´ está a la derecha de la ñ y recoge los fallos de tilde y diéresis.
+const FILAS = ['qwertyuiop', 'asdfghjklñ´', 'zxcvbnm'];
+const NIVELES = 4;
+const TECLAS_EN_RESUMEN = 5;
+
+// Lo tecleado de más que admite el campo; más allá no aporta nada y rompería la línea.
+const SOBRANTES_MAX = 3;
+// Pegar y arrastrar texto; la composición de teclas muertas y teclados de móvil sí se admite.
+const INSERCIONES_BLOQUEADAS = new Set([
+  'insertFromPaste', 'insertFromDrop', 'insertFromYank', 'insertFromPasteAsQuotation',
+]);
+
+const nombreTecla = (tecla) => (tecla === '´' ? 'tilde' : tecla);
 
 const textoCorrectas = (n) => `${n} ${n === 1 ? 'palabra correcta' : 'palabras correctas'}`;
 
@@ -30,6 +45,10 @@ export class Vista {
   #mensaje;
   #anuncio;
   #resultado;
+  #hoja;
+  #informe;
+  #resumen;
+  #teclas;
   #letras = [];
 
   constructor(raiz = document) {
@@ -43,10 +62,13 @@ export class Vista {
     this.#boton = nodo('boton');
     this.#mensaje = nodo('mensaje');
     this.#anuncio = nodo('anuncio');
+    this.#hoja = nodo('hoja');
+    this.#informe = nodo('informe');
+    this.#resumen = nodo('fallos-resumen');
+    this.#teclas = Vista.#crearTeclado(nodo('teclado'));
     this.#resultado = {
       panel: nodo('resultado'),
       ppm: nodo('resultado-ppm'),
-      correctas: nodo('resultado-correctas'),
       tiempo: nodo('resultado-tiempo'),
       precision: nodo('resultado-precision'),
       marca: nodo('resultado-marca'),
@@ -55,7 +77,7 @@ export class Vista {
 
     // Se bloquea pegar y arrastrar texto al campo.
     this.#campo.addEventListener('beforeinput', (evento) => {
-      if (evento.inputType.startsWith('insertFrom')) evento.preventDefault();
+      if (INSERCIONES_BLOQUEADAS.has(evento.inputType)) evento.preventDefault();
     });
   }
 
@@ -105,7 +127,7 @@ export class Vista {
 
       if (evento.key === 'Escape') {
         manejador('detener');
-      } else if (evento.key === 'Enter' && !evento.target.closest('button, input')) {
+      } else if (evento.key === 'Enter' && !evento.target.closest('a, button, input')) {
         manejador('comenzar');
       } else if (evento.key.length === 1 && evento.key !== ' ' && evento.target !== this.#campo) {
         manejador('enfocar');
@@ -125,6 +147,7 @@ export class Vista {
   mostrarPrueba() {
     this.#cambiarEstado('activo');
     this.#resultado.panel.hidden = true;
+    this.#informe.hidden = true;
     this.#palabra.hidden = false;
     this.limpiarCampo();
     this.marcarError(false);
@@ -136,8 +159,9 @@ export class Vista {
     this.#letras = [...palabra].map(crearLetra);
     this.#palabra.replaceChildren(...this.#letras);
     this.#letras[0].classList.add('letra--cursor');
-    // Con ella el CSS reduce el cuerpo de letra de las palabras largas.
-    this.#palabra.style.setProperty('--letras', this.#letras.length);
+    // Con ella el CSS ajusta el cuerpo de la muestra y del campo a la longitud de la palabra.
+    this.#hoja.style.setProperty('--letras', this.#letras.length);
+    this.#campo.setAttribute('maxlength', this.#letras.length + SOBRANTES_MAX);
   }
 
   /** @param {{letra: string, estado: string}[]} progreso */
@@ -153,8 +177,8 @@ export class Vista {
     this.#letras.forEach((span, i) => {
       const { letra, estado } = progreso[i];
       escribirTexto(span, letra);
-      span.className = `letra letra--${estado}`;
-      span.classList.toggle('letra--cursor', i === cursor);
+      const clase = `letra letra--${estado}${i === cursor ? ' letra--cursor' : ''}`;
+      if (span.className !== clase) span.className = clase;
     });
   }
 
@@ -181,39 +205,87 @@ export class Vista {
     this.#campo.focus();
   }
 
-  /** Destello de color en el contador de correctas. */
+  /** Golpe del tipo en el contador de correctas. */
   celebrarAcierto() {
-    this.#correctas.classList.remove('marcador__valor--acierto');
+    this.#correctas.classList.remove('marcador__valor--golpe');
     // Leer una medida fuerza el reflow y reinicia la animación aunque la anterior no haya acabado.
     void this.#correctas.offsetWidth;
-    this.#correctas.classList.add('marcador__valor--acierto');
+    this.#correctas.classList.add('marcador__valor--golpe');
   }
 
   /**
    * @param {{ppm: number, correctas: number, segundos: number, precision: number|null,
-   *          mejorMarca: number, record: boolean}} resultado
+   *          mejorMarca: number, record: boolean, fallos: Map<string, number>}} resultado
    */
-  mostrarResultado({ ppm, correctas, segundos, precision, mejorMarca, record }) {
+  mostrarResultado({ ppm, correctas, segundos, precision, mejorMarca, record, fallos }) {
     const r = this.#resultado;
     r.ppm.textContent = ENTERO.format(ppm);
-    r.correctas.textContent = ENTERO.format(correctas);
     r.tiempo.textContent = SEGUNDOS.format(segundos);
     r.precision.textContent = precision === null ? '—' : PORCENTAJE.format(precision);
     r.marca.textContent = mejorMarca > 0 ? `${ENTERO.format(mejorMarca)} ppm` : '—';
     r.record.hidden = !record;
+    this.#pintarFallos(fallos);
+    const resumen = precision === null ? 'No se ha tecleado nada en esta prueba.' : Vista.#resumir(fallos);
+    this.#resumen.textContent = resumen;
 
     this.#cambiarEstado('parado');
     this.limpiarCampo();
     this.marcarError(false);
     this.#palabra.hidden = true;
     r.panel.hidden = false;
+    this.#informe.hidden = false;
     this.#boton.focus();
 
     const detalle = precision === null ? '' : `, precisión del ${PORCENTAJE.format(precision)}`;
     this.anunciar(
       `Prueba detenida. ${textoCorrectas(correctas)} en ${SEGUNDOS.format(segundos)}: `
-      + `${ENTERO.format(ppm)} palabras por minuto${detalle}.${record ? ' Nueva mejor marca.' : ''}`,
+      + `${ENTERO.format(ppm)} palabras por minuto${detalle}.${record ? ' Nueva mejor marca.' : ''}`
+      + (precision === null ? '' : ` ${resumen}`),
     );
+  }
+
+  /** Crea una vez las teclas del teclado de fallos. @returns {Map<string, {tecla: Element, cuenta: Element}>} */
+  static #crearTeclado(contenedor) {
+    const teclas = new Map();
+    const filas = FILAS.map((fila) => {
+      const div = document.createElement('div');
+      div.className = 'teclado__fila';
+      for (const letra of fila) {
+        const tecla = document.createElement('span');
+        tecla.className = 'tecla';
+        tecla.dataset.nivel = '0';
+        const nombre = document.createElement('span');
+        nombre.className = 'tecla__letra';
+        nombre.textContent = letra;
+        const cuenta = document.createElement('span');
+        cuenta.className = 'tecla__cuenta';
+        tecla.append(nombre, cuenta);
+        div.append(tecla);
+        teclas.set(letra, { tecla, cuenta });
+      }
+      return div;
+    });
+    contenedor.replaceChildren(...filas);
+    return teclas;
+  }
+
+  // El reparto en niveles es presentación: la tecla más fallada siempre llega al último.
+  #pintarFallos(fallos) {
+    const max = Math.max(0, ...fallos.values());
+    for (const [letra, { tecla, cuenta }] of this.#teclas) {
+      const n = fallos.get(letra) ?? 0;
+      tecla.dataset.nivel = n === 0 ? 0 : Math.ceil((n / max) * NIVELES);
+      cuenta.textContent = n || '';
+    }
+  }
+
+  static #resumir(fallos) {
+    if (fallos.size === 0) return 'Ninguna tecla fallada en esta prueba.';
+    const orden = [...fallos].sort((a, b) => b[1] - a[1]);
+    const partes = orden.slice(0, TECLAS_EN_RESUMEN).map(([tecla, n]) => `${nombreTecla(tecla)} (${n})`);
+    const resto = orden.length - TECLAS_EN_RESUMEN;
+    if (resto > 0) partes.push(`${resto} más`);
+    return `Teclas con fallos: ${LISTA.format(partes)}.`;
   }
 
   mostrarError(mensaje) {
