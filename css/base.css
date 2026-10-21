@@ -11,17 +11,22 @@
     font-size: var(--paso-0);
     font-weight: var(--peso-normal);
     line-height: var(--interlineado);
-    color: var(--texto);
-    background-color: var(--fondo);
+    color: var(--tinta);
+    background-color: var(--mesa);
   }
 
-  h1, h2, h3, p, dl, dd {
+  h1, h2, h3, p, dl, dd, figure {
     margin: 0;
   }
 
-  h1 {
-    font-family: var(--fuente-display);
-    line-height: var(--interlineado-ajustado);
+  img {
+    max-inline-size: 100%;
+    block-size: auto;
+  }
+
+  a {
+    color: var(--tinta);
+    text-underline-offset: 0.15em;
   }
 
   button,
@@ -31,7 +36,7 @@
   }
 
   :focus-visible {
-    outline: var(--anillo) solid var(--accion);
+    outline: var(--anillo) solid var(--tinta);
     outline-offset: 2px;
   }
 }

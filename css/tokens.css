@@ -5,31 +5,31 @@
   :root {
     color-scheme: light dark;
 
-    /* Complementaria con acento análogo: azul para la acción, su opuesto (+180°) para el
-       error y un verde análogo del azul (−60°) para el acierto. */
-    --tono: 212;
-    --tono-complementario: calc(var(--tono) + 180);
-    --tono-exito: calc(var(--tono) - 60);
+    /* Monocromática: un único tono, el rojo de la cinta. Mesa, papel y tinta son ese tono casi sin
+       saturación; el error es el mismo tono saturado. */
+    --tono: 0;
 
-    --fondo: light-dark(hsl(var(--tono) 30% 97%), hsl(var(--tono) 25% 10%));
-    --superficie: light-dark(hsl(var(--tono) 40% 100%), hsl(var(--tono) 22% 15%));
-    --texto: light-dark(hsl(var(--tono) 30% 14%), hsl(var(--tono) 30% 92%));
-    --texto-suave: light-dark(hsl(var(--tono) 12% 38%), hsl(var(--tono) 12% 70%));
-    --borde: light-dark(hsl(var(--tono) 15% 52%), hsl(var(--tono) 12% 50%)); /* ≥ 3:1, para controles */
-    --borde-suave: color-mix(in oklab, var(--borde) 40%, transparent); /* solo separa tarjetas */
+    --mesa: light-dark(hsl(var(--tono) 7% 90%), hsl(var(--tono) 7% 9%));
+    --papel: light-dark(hsl(var(--tono) 14% 99%), hsl(var(--tono) 7% 14%));
+    --renglon: light-dark(hsl(var(--tono) 10% 95%), hsl(var(--tono) 7% 18%));
+    --tinta: light-dark(hsl(var(--tono) 12% 11%), hsl(var(--tono) 12% 92%));
+    --tinta-intensa: light-dark(hsl(var(--tono) 10% 24%), hsl(var(--tono) 10% 80%));
+    --tinta-suave: light-dark(hsl(var(--tono) 6% 33%), hsl(var(--tono) 6% 72%));
+    --guia: light-dark(hsl(var(--tono) 5% 43%), hsl(var(--tono) 5% 62%));
+    --borde: light-dark(hsl(var(--tono) 6% 46%), hsl(var(--tono) 6% 52%));
+    --cinta: light-dark(hsl(var(--tono) 72% 40%), hsl(var(--tono) 75% 68%));
+    --tinte-cinta: light-dark(hsl(var(--tono) 70% 95%), hsl(var(--tono) 40% 17%));
 
-    --accion: light-dark(hsl(var(--tono) 75% 40%), hsl(var(--tono) 90% 72%));
-    --accion-intensa: light-dark(hsl(var(--tono) 80% 32%), hsl(var(--tono) 95% 80%));
-    --sobre-accion: light-dark(hsl(var(--tono) 40% 99%), hsl(var(--tono) 50% 10%));
-    --tinte-accion: color-mix(in oklab, var(--accion) 14%, transparent);
+    /* Escala de calor del teclado de fallos: el mismo tono, cada vez más saturado */
+    --calor-0: light-dark(hsl(var(--tono) 8% 97%), hsl(var(--tono) 6% 19%));
+    --calor-1: light-dark(hsl(var(--tono) 70% 92%), hsl(var(--tono) 40% 24%));
+    --calor-2: light-dark(hsl(var(--tono) 70% 83%), hsl(var(--tono) 48% 31%));
+    --calor-3: light-dark(hsl(var(--tono) 68% 66%), hsl(var(--tono) 55% 42%));
+    --calor-4: var(--cinta);
+    --sobre-calor-4: light-dark(hsl(var(--tono) 14% 99%), hsl(var(--tono) 7% 9%));
 
-    --error: light-dark(hsl(var(--tono-complementario) 90% 32%), hsl(var(--tono-complementario) 95% 62%));
-    --tinte-error: light-dark(hsl(var(--tono-complementario) 90% 96%), hsl(var(--tono-complementario) 45% 17%));
-    --exito: light-dark(hsl(var(--tono-exito) 75% 26%), hsl(var(--tono-exito) 60% 60%));
-
-    /* Tipografía: serif para lo que se lee como palabra, sans de sistema para la interfaz */
-    --fuente-display: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
-    --fuente-interfaz: system-ui, "Segoe UI", Roboto, sans-serif;
+    --fuente-hoja: "Courier New", Courier, "Courier 10 Pitch", "Nimbus Mono PS", "Liberation Mono", ui-monospace, monospace;
+    --fuente-interfaz: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
 
     --razon: 1.25; /* tercera mayor */
     --paso--1: calc(1rem / var(--razon));
@@ -39,13 +39,11 @@
     --paso-3: calc(var(--paso-2) * var(--razon));
     --paso-4: calc(var(--paso-3) * var(--razon));
     --paso-5: calc(var(--paso-4) * var(--razon));
-    --paso-6: calc(var(--paso-5) * var(--razon));
 
     --peso-normal: 400;
     --peso-medio: 600;
     --peso-fuerte: 700;
     --interlineado: 1.5;
-    --interlineado-ajustado: 1.15;
 
     /* Espacio: escala en rem; solo el exterior crece con la ventana */
     --espacio-1: 0.25rem;
@@ -53,14 +51,20 @@
     --espacio-3: 1rem;
     --espacio-4: 1.5rem;
     --espacio-5: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+    --espacio-6: clamp(2rem, 1rem + 5vw, 6rem); /* entre las dos columnas */
+    --sangria: 0.75rem; /* margen interior común a muestra y campo */
+    --ancho-maximo: 80rem;
+    --ancho-columna: 44rem;
+    --medida: 60ch;
 
-    --radio: 0.75rem;
-    --radio-pequeno: 0.375rem;
+    --radio: 0.125rem;
     --anillo: 3px;
     --hundimiento: 1px; /* botón pulsado */
-    --control: 3rem; /* alto mínimo de campo y botón: objetivo táctil holgado */
-    --ancho-columna: 40rem;
-    --medida: 60ch;
+    --control: 3rem; /* alto mínimo del botón: objetivo táctil holgado */
     --duracion: 150ms;
+    --entrada: 240ms;
+    --escalon: 60ms;
+    --golpe: 140ms;
+    --curva: cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }

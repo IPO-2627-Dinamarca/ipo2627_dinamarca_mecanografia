@@ -1,108 +1,166 @@
 @layer layout {
-  /* Una columna: cabecera y prueba centradas como un solo bloque, el pie al final */
+  /* Una columna anclada arriba; la lámina va después de la prueba en el DOM y en pantalla */
   .app {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "cabecera"
+      "principal"
+      "lamina"
+      "pie";
+    align-content: start;
     gap: var(--espacio-5);
     min-block-size: 100dvh;
-    padding: var(--espacio-5) var(--espacio-3);
+    padding-block: var(--espacio-5);
+    padding-inline: max(var(--espacio-3), (100% - var(--ancho-columna)) / 2);
   }
 
-  .cabecera,
-  .principal,
-  .pie {
-    inline-size: min(100%, var(--ancho-columna));
+  /* Escritorio: dos columnas desiguales, la máquina a la izquierda y la hoja a la derecha */
+  @media (width >= 60rem) {
+    .app {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
+        "cabecera principal"
+        "lamina   principal"
+        "pie      pie";
+      column-gap: var(--espacio-6);
+      padding-inline: max(var(--espacio-5), (100% - var(--ancho-maximo)) / 2);
+    }
+
+    .principal,
+    .lamina {
+      align-self: start;
+    }
   }
+
+  .cabecera { grid-area: cabecera; }
+  .principal { grid-area: principal; }
+  .lamina { grid-area: lamina; }
+  .pie { grid-area: pie; }
 
   .cabecera {
     display: grid;
-    gap: var(--espacio-2);
-    margin-block-start: auto;
+    gap: var(--espacio-3);
   }
 
-  /* Contenedor de consulta: la muestra y los controles se dimensionan según el ancho de la columna */
+  /* Contenedor de consulta: el mando se apila cuando la columna es estrecha */
   .principal {
     container: principal / inline-size;
     display: grid;
-    gap: var(--espacio-4);
-    margin-block-end: auto;
+    gap: var(--espacio-3);
   }
 
-  .marcadores {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--espacio-2);
+  .marcadores,
+  .informe__datos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--espacio-2) var(--espacio-5);
   }
 
   .marcador {
-    display: grid;
-    gap: var(--espacio-1);
+    display: flex;
+    align-items: baseline;
+    gap: 0.35em;
   }
 
-  /* Proximidad: escenario, campo y ayuda van más juntos entre sí que respecto a los marcadores */
+  /* Cifra delante y nombre detrás; el lector de pantalla sigue el orden del DOM (dt, dd) */
+  .marcador__valor {
+    order: -1;
+  }
+
+  .marcador--ritmo {
+    margin-inline-start: auto;
+  }
+
+  /* Columna estrecha: correctas en una línea; segundos y ppm en la siguiente, a los dos extremos */
+  @container principal (inline-size < 30rem) {
+    .marcadores > :first-child {
+      flex-basis: 100%;
+    }
+  }
+
   .prueba {
     display: grid;
+    gap: var(--espacio-3);
+  }
+
+  /* La hoja es contenedor propio: de su ancho sale el cuerpo de la palabra y del campo */
+  .hoja {
+    container: hoja / inline-size;
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "escenario"
-      "controles"
-      "ayuda";
-    gap: var(--espacio-2);
+      "linea"
+      "controles";
+    /* Proporcional al cuerpo: deja sitio al subrayado ondulado de la letra errónea */
+    gap: calc(var(--cuerpo-max) * 0.2);
+    --cuerpo-max: 5.5rem;
+    /* La palabra ocupa el 93 % del ancho útil de la muestra (avance de 0,6 em por letra) */
+    --cuerpo: clamp(2rem, calc((100cqi - 2 * var(--sangria)) * 1.55 / var(--letras, 8)), var(--cuerpo-max));
   }
 
-  /* Las dos ayudas comparten celda: mide lo que la más alta y nada se mueve al cambiar de estado */
-  .ayuda { grid-area: ayuda; }
-
-  .escenario {
-    grid-area: escenario;
-    display: grid;
-    place-items: center;
-    min-block-size: 9rem;
+  @container principal (inline-size < 30rem) {
+    .hoja {
+      --cuerpo-max: 4.5rem;
+    }
   }
 
+  /* Muestra, resultado y aviso comparten celda de alto fijo: el campo no se mueve con ninguna palabra */
+  .muestra,
+  .resultado,
+  .aviso {
+    grid-area: linea;
+    align-content: end;
+  }
+
+  .muestra,
   .resultado {
-    display: grid;
-    justify-items: center;
-    gap: var(--espacio-3);
-    inline-size: 100%;
+    block-size: calc(var(--cuerpo-max) * 1.15);
   }
 
+  .aviso {
+    min-block-size: calc(var(--cuerpo-max) * 1.15);
+  }
+
+  /* La unidad puede partirse; su última línea se apoya en la línea base de la cifra */
   .resultado__principal {
-    display: grid;
-  }
-
-  .resultado__datos {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
-    gap: var(--espacio-3);
-    inline-size: 100%;
+    display: flex;
+    align-items: last baseline;
+    gap: var(--espacio-2) var(--espacio-3);
   }
 
   .controles {
     grid-area: controles;
     display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "etiqueta etiqueta"
-      "campo    boton"
-      "error    .";
-    gap: var(--espacio-1) var(--espacio-2);
-    margin-block-start: var(--espacio-2);
+    gap: var(--espacio-1);
   }
 
-  .controles__etiqueta { grid-area: etiqueta; }
-  .campo { grid-area: campo; }
-  .boton { grid-area: boton; }
-  .controles__error { grid-area: error; }
+  .mando {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "boton ayuda";
+    align-items: center;
+    gap: var(--espacio-3);
+  }
 
-  @container principal (inline-size < 24rem) {
-    .controles {
+  .boton { grid-area: boton; }
+
+  /* Las dos ayudas comparten celda: mide lo que la más alta y nada se mueve al cambiar de estado */
+  .ayuda { grid-area: ayuda; }
+
+  @container principal (inline-size < 30rem) {
+    .teclado {
+      column-gap: 0.125rem;
+    }
+
+    .mando {
       grid-template-columns: 1fr;
       grid-template-areas:
-        "etiqueta"
-        "campo"
-        "error"
-        "boton";
+        "boton"
+        "ayuda";
     }
   }
 
@@ -112,4 +170,41 @@
     justify-content: center;
     gap: var(--espacio-2);
   }
+
+  .informe {
+    display: grid;
+    gap: var(--espacio-4);
+    margin-block-start: var(--espacio-5);
+  }
+
+  .fallos {
+    display: grid;
+    gap: var(--espacio-3);
+  }
+
+  /* 23 medias teclas: cada tecla ocupa dos y las filas se escalonan media tecla y una tecla */
+  .teclado {
+    container: teclado / inline-size;
+    display: grid;
+    grid-template-columns: repeat(23, minmax(0, 1fr));
+    gap: var(--espacio-1);
+    max-inline-size: 36rem;
+  }
+
+  .teclado__fila {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
+  .tecla {
+    grid-column: span 2;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    aspect-ratio: 1;
+  }
+
+  .teclado__fila:nth-child(2) > :first-child { grid-column: 2 / span 2; }
+  .teclado__fila:nth-child(3) > :first-child { grid-column: 3 / span 2; }
 }

@@ -5,9 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
   <title>Mecanografía · Test de velocidad</title>
   <meta name="description" content="Test de velocidad de mecanografía: teclea palabras al azar y mide tus palabras por minuto y tu precisión.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Mecanografía · Test de velocidad">
+  <meta property="og:description" content="Test de velocidad de mecanografía: teclea palabras al azar y mide tus palabras por minuto y tu precisión.">
+  <meta property="og:url" content="https://ipo-2627-dinamarca.github.io/ipo2627_dinamarca_mecanografia/">
+  <meta property="og:image" content="https://ipo-2627-dinamarca.github.io/ipo2627_dinamarca_mecanografia/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="es_ES">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#131920" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#e7e4e4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#191515" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
   <link rel="stylesheet" href="css/tokens.css">
@@ -23,22 +32,22 @@
   <div class="app" data-estado="error" data-vista="app">
     <header class="cabecera">
       <h1 class="cabecera__titulo">Mecanografía</h1>
-      <p class="cabecera__lema">Escribe la palabra que aparece: si la completas sin errores, suma una y sale otra.</p>
+      <p class="cabecera__lema">Teclea la palabra que aparece en la hoja. Si la completas sin fallos, suma una y sale otra.</p>
     </header>
 
     <main class="principal">
       <h2 class="visualmente-oculto">Marcadores</h2>
       <dl class="marcadores">
         <div class="marcador">
-          <dt class="marcador__etiqueta">Correctas</dt>
+          <dt class="marcador__etiqueta">correctas</dt>
           <dd class="marcador__valor" data-vista="correctas">0</dd>
         </div>
         <div class="marcador">
-          <dt class="marcador__etiqueta">Segundos</dt>
+          <dt class="marcador__etiqueta">segundos</dt>
           <dd class="marcador__valor" data-vista="segundos">0</dd>
         </div>
-        <div class="marcador">
-          <dt class="marcador__etiqueta"><abbr title="Palabras por minuto">PPM</abbr></dt>
+        <div class="marcador marcador--ritmo">
+          <dt class="marcador__etiqueta"><abbr title="palabras por minuto">ppm</abbr></dt>
           <dd class="marcador__valor" data-vista="ppm">—</dd>
         </div>
       </dl>
@@ -46,60 +55,79 @@
       <section class="prueba" aria-labelledby="prueba-titulo">
         <h2 class="visualmente-oculto" id="prueba-titulo">Prueba</h2>
 
-        <div class="escenario">
+        <div class="hoja" data-vista="hoja">
           <p class="muestra" data-vista="palabra">Cargando palabras…</p>
 
           <section class="resultado" data-vista="resultado" aria-labelledby="resultado-titulo" hidden>
-            <h3 class="resultado__titulo" id="resultado-titulo">Resultado</h3>
+            <h3 class="visualmente-oculto" id="resultado-titulo">Resultado</h3>
             <p class="resultado__principal">
               <span class="resultado__ppm" data-vista="resultado-ppm">0</span>
               <span class="resultado__unidad">palabras por minuto</span>
             </p>
-            <dl class="resultado__datos">
-              <div>
-                <dt>Correctas</dt>
-                <dd data-vista="resultado-correctas">0</dd>
-              </div>
-              <div>
-                <dt>Tiempo</dt>
-                <dd data-vista="resultado-tiempo">0 s</dd>
-              </div>
-              <div>
-                <dt>Precisión</dt>
-                <dd data-vista="resultado-precision">—</dd>
-              </div>
-              <div>
-                <dt>Mejor marca</dt>
-                <dd data-vista="resultado-marca">—</dd>
-              </div>
-            </dl>
-            <p class="resultado__record" data-vista="resultado-record" hidden>Nueva mejor marca</p>
           </section>
 
           <p class="aviso" data-vista="mensaje" role="alert">
             No se ha podido iniciar la aplicación. Necesita JavaScript y, si has abierto index.html
             directamente, servirse desde un servidor local.
           </p>
+
+          <div class="controles">
+            <label class="controles__etiqueta" for="campo">Escribe la palabra</label>
+            <input class="campo" id="campo" type="text" data-vista="campo"
+                   autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
+                   enterkeyhint="next" aria-describedby="ayuda-activa" aria-errormessage="error"
+                   aria-invalid="false" disabled>
+            <p class="controles__error" id="error">Palabra incompleta o con errores.</p>
+          </div>
         </div>
 
-        <div class="controles">
-          <label class="controles__etiqueta" for="campo">Escribe la palabra</label>
-          <input class="campo" id="campo" type="text" data-vista="campo"
-                 autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
-                 enterkeyhint="next" aria-describedby="ayuda-activa" aria-errormessage="error"
-                 aria-invalid="false" disabled>
+        <div class="mando">
           <button class="boton" type="button" data-vista="boton" aria-keyshortcuts="Enter" disabled>Iniciar</button>
-          <p class="controles__error" id="error">Palabra incompleta o con errores.</p>
+          <p class="ayuda ayuda--parado">Pulsa <kbd>Intro</kbd> o el botón Iniciar para empezar.</p>
+          <p class="ayuda ayuda--activo" id="ayuda-activa">
+            La palabra se acepta al completarla. <kbd>Esc</kbd> detiene la prueba.
+          </p>
         </div>
 
-        <p class="ayuda ayuda--parado">Pulsa <kbd>Intro</kbd> o el botón Iniciar para empezar.</p>
-        <p class="ayuda ayuda--activo" id="ayuda-activa">
-          La palabra se acepta al completarla. <kbd>Esc</kbd> detiene la prueba.
-        </p>
+        <section class="informe" data-vista="informe" aria-labelledby="informe-titulo" hidden>
+          <h3 class="informe__titulo" id="informe-titulo">Detalle de la prueba</h3>
+          <dl class="informe__datos">
+            <div class="marcador">
+              <dt class="marcador__etiqueta">tiempo</dt>
+              <dd class="marcador__valor" data-vista="resultado-tiempo">0 s</dd>
+            </div>
+            <div class="marcador">
+              <dt class="marcador__etiqueta">precisión</dt>
+              <dd class="marcador__valor" data-vista="resultado-precision">—</dd>
+            </div>
+            <div class="marcador">
+              <dt class="marcador__etiqueta">mejor marca</dt>
+              <dd class="marcador__valor" data-vista="resultado-marca">—</dd>
+            </div>
+          </dl>
+          <p class="informe__record" data-vista="resultado-record" hidden>Nueva mejor marca.</p>
+
+          <figure class="fallos">
+            <figcaption class="fallos__resumen" data-vista="fallos-resumen"></figcaption>
+            <div class="teclado" data-vista="teclado" aria-hidden="true"></div>
+          </figure>
+        </section>
       </section>
 
       <p class="visualmente-oculto" data-vista="anuncio" aria-live="polite"></p>
     </main>
+
+    <aside class="lamina" aria-label="La máquina">
+      <figure class="lamina__figura">
+        <img class="lamina__foto" src="img/hispano-olivetti-m40.jpg" width="1280" height="1009" decoding="async"
+             alt="Máquina de escribir Hispano Olivetti M40 vista de frente, con teclas redondas y la ñ en la fila central del teclado.">
+        <figcaption class="lamina__credito">
+          Hispano Olivetti M40, fabricada en España en la década de 1930 según su ficha. Foto de Amfeli,
+          <a href="https://commons.wikimedia.org/wiki/File:M%C3%A1quina_de_escribir_Hispano_Olivetti_M40.jpg">Wikimedia Commons</a>,
+          <a href="https://creativecommons.org/licenses/by/4.0/deed.es">CC BY 4.0</a>; reducida y en escala de grises.
+        </figcaption>
+      </figure>
+    </aside>
 
     <footer class="pie">
       <p>Grupo Dinamarca · IPO 2026/27</p>
