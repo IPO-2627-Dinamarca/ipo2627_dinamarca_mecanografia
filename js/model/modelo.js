@@ -1,3 +1,6 @@
+// Vocal acentuada y su vocal base. La tilde y la diéresis se escriben con la tecla ´ (¨ con mayúsculas).
+const BASE_ACENTUADA = { á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ü: 'u' };
+
 /** Estado de una prueba: palabra en curso, aciertos, pulsaciones y tiempo transcurrido. */
 export class Modelo {
   #palabras;
@@ -11,6 +14,7 @@ export class Modelo {
   #inicio = 0;
   #fin = 0;
   #activo = false;
+  #fallosPorTecla = new Map();
 
   /** @param {string[]} palabras sin repetidas */
   constructor(palabras) {
@@ -24,6 +28,9 @@ export class Modelo {
   get activo() { return this.#activo; }
   get palabra() { return this.#palabra; }
   get correctas() { return this.#correctas; }
+
+  /** Copia de los fallos de la prueba por tecla: Map<tecla, número>. */
+  get fallosPorTecla() { return new Map(this.#fallosPorTecla); }
 
   /** Tiempo de la prueba en curso o de la última, medido con el reloj del navegador. */
   get milisegundos() {
@@ -69,6 +76,7 @@ export class Modelo {
     this.#correctas = 0;
     this.#pulsaciones = 0;
     this.#fallos = 0;
+    this.#fallosPorTecla.clear();
     this.#inicio = performance.now();
     this.#activo = true;
     this.#siguientePalabra();
@@ -91,7 +99,10 @@ export class Modelo {
     const intento = Modelo.#normalizar(texto);
     for (let i = this.#intento.length; i < intento.length; i++) {
       this.#pulsaciones++;
-      if (intento[i] !== this.#objetivo[i]) this.#fallos++;
+      if (intento[i] !== this.#objetivo[i]) {
+        this.#fallos++;
+        this.#anotarFallo(this.#objetivo[i], intento[i]);
+      }
     }
     this.#intento = intento;
     if (intento !== this.#objetivo) return false;
@@ -102,15 +113,33 @@ export class Modelo {
   }
 
   /**
-   * Validación explícita (Espacio o Intro). Si la palabra no está completa y bien, cuenta un fallo.
+   * Validación explícita (Espacio o Intro). Si lo escrito es correcto pero incompleto, cuenta un
+   * fallo; si ya tenía un error, ese fallo se contó al teclearlo y no se suma otro.
    * @returns {boolean} true si era correcta.
    */
   confirmar(texto) {
     if (!this.#activo) return false;
     if (this.escribir(texto)) return true;
-    this.#pulsaciones++;
-    this.#fallos++;
+    if (!this.hayError) {
+      this.#pulsaciones++;
+      this.#fallos++;
+      this.#anotarFallo(this.#objetivo[this.#intento.length]); // la letra que faltaba
+    }
     return false;
+  }
+
+  #anotarFallo(esperada, escrita) {
+    if (esperada === undefined) return; // lo tecleado de más no corresponde a ninguna tecla
+    const tecla = Modelo.#teclaDe(esperada, escrita);
+    this.#fallosPorTecla.set(tecla, (this.#fallosPorTecla.get(tecla) ?? 0) + 1);
+  }
+
+  // Se culpa a la tecla de la letra pedida; si solo faltó la tilde (a por á), a la tecla ´.
+  // La ñ es su propia tecla: por eso la tabla explícita y no NFD.
+  static #teclaDe(esperada, escrita) {
+    const base = BASE_ACENTUADA[esperada];
+    if (base && escrita === base) return '´';
+    return base ?? esperada;
   }
 
   #siguientePalabra() {
