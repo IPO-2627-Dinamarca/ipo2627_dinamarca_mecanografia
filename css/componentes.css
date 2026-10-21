@@ -1,42 +1,27 @@
 @layer componentes {
   /* Cabecera y pie */
 
-  .cabecera {
-    text-align: center;
-  }
-
   .cabecera__titulo {
-    font-size: clamp(var(--paso-4), 1.5rem + 2.5vw, var(--paso-5));
+    font-size: clamp(var(--paso-3), 1.2rem + 3vw, var(--paso-5));
     font-weight: var(--peso-fuerte);
+    line-height: 1;
+    letter-spacing: -0.03em;
   }
 
   .cabecera__lema {
-    max-inline-size: var(--medida);
-    margin-inline: auto;
-    color: var(--texto-suave);
-    text-wrap: balance;
+    max-inline-size: 34ch;
+    text-wrap: pretty;
   }
 
   .pie {
     font-size: var(--paso--1);
-    text-align: center;
-    color: var(--texto-suave);
+    color: var(--tinta-suave);
   }
 
-  /* Marcadores: tres tarjetas iguales (semejanza) */
-
-  .marcador {
-    padding: var(--espacio-3) var(--espacio-2);
-    text-align: center;
-    background-color: var(--superficie);
-    border: 1px solid var(--borde-suave);
-    border-radius: var(--radio);
-  }
+  /* Marcadores: cifra y nombre sobre la mesa, sin cajas (semejanza con el detalle) */
 
   .marcador__etiqueta {
-    font-size: var(--paso--1);
-    font-weight: var(--peso-medio);
-    color: var(--texto-suave);
+    color: var(--tinta-suave);
 
     & abbr {
       text-decoration: none;
@@ -45,47 +30,64 @@
 
   .marcador__valor {
     font-size: var(--paso-3);
-    font-weight: var(--peso-medio);
-    line-height: var(--interlineado-ajustado);
+    font-weight: var(--peso-fuerte);
+    line-height: 1;
     font-variant-numeric: tabular-nums;
   }
 
-  .marcador__valor--acierto {
-    animation: destello 600ms ease-out;
+  /* Con el resultado abierto la cifra está en la hoja; visibility conserva el alto de la línea */
+  .app:has(.resultado:not([hidden])) .marcador--ritmo {
+    visibility: hidden;
   }
 
-  @keyframes destello {
-    from { color: var(--exito); }
+  /* Hoja: la superficie más clara, separada de la mesa por el tono. El borde solo se ve en alto contraste. */
+
+  .hoja {
+    --rodillo: 1rem;
+
+    margin-block-start: calc(var(--rodillo) / 2);
+    padding: var(--espacio-5) var(--espacio-4) var(--espacio-4);
+    background-color: var(--papel);
+    border: 1px solid transparent;
+
+    /* El rodillo del que sale el papel, algo más ancho que la hoja */
+    &::before {
+      content: "";
+      position: absolute;
+      inset-block-start: calc(var(--rodillo) / -2);
+      inset-inline: calc(var(--espacio-2) * -1);
+      block-size: var(--rodillo);
+      background-color: var(--tinta);
+      border-radius: var(--rodillo);
+    }
+
+    /* La cinta bicolor en el punto de impresión: banda de tinta sobre banda roja */
+    &::after {
+      content: "";
+      position: absolute;
+      inset-block-start: calc(var(--rodillo) * 0.75);
+      inset-inline-start: calc(var(--espacio-4) + var(--sangria));
+      inline-size: 2.5rem;
+      block-size: 0.5rem;
+      background-color: var(--cinta);
+      border-block-start: 0.25rem solid var(--tinta);
+    }
   }
 
-  /* Al detener, el panel de resultado ya incluye estos datos */
-  .principal:has(.resultado:not([hidden])) .marcadores {
-    display: none;
-  }
-
-  /* Escenario: la palabra o el resultado sobre una superficie más clara que el fondo */
-
-  .escenario {
-    padding: var(--espacio-4) var(--espacio-3);
-    background-color: var(--superficie);
-    border: 1px solid var(--borde-suave);
-    border-radius: var(--radio);
-  }
-
-  /* --letras lo fija la vista: cuanto más larga la palabra, menor el cuerpo, para que quepa en una línea */
+  /* Muestra y campo comparten pila, peso, cuerpo, espaciado y sangría: cada letra cae bajo la suya */
   .muestra {
-    font-family: var(--fuente-display);
-    font-size: clamp(var(--paso-3), calc(140cqi / var(--letras, 6)), var(--paso-6));
-    font-weight: var(--peso-medio);
-    line-height: 1.2;
-    letter-spacing: 0.02em;
-    text-align: center;
-    overflow-wrap: anywhere;
+    padding-inline: var(--sangria);
+    font: var(--peso-fuerte) var(--cuerpo) / 1 var(--fuente-hoja);
+    letter-spacing: 0;
+    white-space: nowrap;
+    overflow-x: clip; /* lo que sobra nunca parte la línea ni ensancha la página */
 
+    /* Texto de espera: cabe "¿Empezamos?" (11 caracteres) y "Cargando palabras…" puede partirse */
     .app:not([data-estado="activo"]) & {
-      font-size: var(--paso-3);
-      font-style: italic;
-      color: var(--texto-suave);
+      font-size: min(var(--paso-4), calc((100cqi - 2 * var(--sangria)) * 1.55 / 11));
+      font-weight: var(--peso-normal);
+      color: var(--guia);
+      white-space: normal;
     }
 
     .app[data-estado="error"] & {
@@ -93,14 +95,18 @@
     }
   }
 
+  .letra--pendiente {
+    color: var(--guia);
+  }
+
   .letra--ok {
-    color: var(--exito);
+    color: var(--tinta);
   }
 
   /* Además del color: subrayado ondulado en la letra errónea y tachado en lo que sobra */
   .letra--error,
   .letra--sobrante {
-    color: var(--error);
+    color: var(--cinta);
     text-decoration: underline wavy;
     text-decoration-thickness: 0.06em;
     text-decoration-skip-ink: none;
@@ -111,128 +117,90 @@
     text-decoration-line: line-through;
   }
 
-  /* Cursor fijo, sin parpadeo; sin saltos en letras con descendente (g, p, q) */
+  /* Cursor fijo, sin parpadeo */
   .letra--cursor {
-    text-decoration: underline solid var(--accion);
+    text-decoration: underline solid var(--tinta);
     text-decoration-thickness: 0.08em;
     text-decoration-skip-ink: none;
-    text-underline-offset: 0.18em;
+    text-underline-offset: 0.14em;
   }
 
   .aviso {
     max-inline-size: var(--medida);
     padding-inline-start: var(--espacio-3);
-    border-inline-start: var(--anillo) solid var(--error);
+    border-inline-start: 0.25rem solid var(--cinta);
 
     .app:not([data-estado="error"]) & {
       display: none;
     }
   }
 
-  .app[data-estado="error"] .controles {
+  .app[data-estado="error"] :is(.controles, .mando) {
     display: none;
   }
 
-  /* Resultado */
+  /* Resultado: la cifra la escribe la máquina, en la misma celda que la palabra */
 
-  .resultado {
-    text-align: center;
-  }
-
-  .resultado__titulo {
-    font-size: var(--paso--1);
-    font-weight: var(--peso-medio);
-    color: var(--texto-suave);
+  .resultado__principal {
+    padding-inline: var(--sangria);
   }
 
   .resultado__ppm {
-    font-family: var(--fuente-display);
-    font-size: var(--paso-6);
-    font-weight: var(--peso-fuerte);
-    line-height: 1;
-    font-variant-numeric: lining-nums tabular-nums;
-  }
-
-  .resultado__unidad {
-    color: var(--texto-suave);
-  }
-
-  .resultado__datos {
-    padding-block-start: var(--espacio-3);
-    border-block-start: 1px solid var(--borde-suave);
-  }
-
-  .resultado__datos dt {
-    font-size: var(--paso--1);
-    color: var(--texto-suave);
-  }
-
-  .resultado__datos dd {
-    font-size: var(--paso-1);
-    font-weight: var(--peso-medio);
+    font: var(--peso-fuerte) var(--cuerpo-max) / 1 var(--fuente-hoja);
     font-variant-numeric: tabular-nums;
   }
 
-  .resultado__record {
-    padding: var(--espacio-1) var(--espacio-3);
-    font-weight: var(--peso-medio);
-    color: var(--exito);
-    border: 1px solid currentColor;
-    border-radius: 999px;
+  .resultado__unidad {
+    color: var(--tinta-suave);
   }
 
-  /* Campo */
+  /* Con el resultado en la hoja no hay nada que escribir: etiqueta y renglón se ocultan sin cambiar de alto */
+  .hoja:has(.resultado:not([hidden])) :is(.controles__etiqueta, .campo) {
+    visibility: hidden;
+  }
+
+  /* Campo: el renglón donde golpean los tipos. Alto fijo aunque la letra cambie con cada palabra. */
 
   .controles__etiqueta {
-    font-size: var(--paso--1);
-    font-weight: var(--peso-medio);
-    color: var(--texto-suave);
+    padding-inline: var(--sangria);
+    color: var(--tinta-suave);
   }
 
-  /* Misma fuente y alineación que la muestra para comparar letra a letra. El foco se marca
-     engrosando el borde, así con error se ve un solo anillo. */
   .campo {
-    --_anillo: var(--accion);
-
     inline-size: 100%;
-    min-block-size: var(--control);
-    padding: var(--espacio-2) var(--espacio-3);
-    font-family: var(--fuente-display);
-    font-size: var(--paso-2);
-    text-align: center;
-    background-color: var(--superficie);
-    border: 2px solid var(--borde);
-    border-radius: var(--radio);
-    caret-color: var(--_anillo);
-
-    &:focus-visible {
-      outline: none;
-      border-color: var(--_anillo);
-      box-shadow: 0 0 0 1px var(--_anillo);
-    }
+    block-size: calc(var(--cuerpo-max) * 1.3);
+    padding: 0 var(--sangria);
+    font: var(--peso-fuerte) var(--cuerpo) / 1 var(--fuente-hoja);
+    letter-spacing: 0;
+    text-align: start;
+    color: var(--tinta);
+    background-color: var(--renglon);
+    border: 0;
+    border-block-end: 2px solid var(--borde);
+    border-radius: 0;
+    caret-color: var(--tinta);
 
     &:disabled {
       background-color: transparent;
-      border-style: dashed;
+      border-block-end-style: dashed;
       cursor: not-allowed;
     }
 
     &[aria-invalid="true"] {
-      --_anillo: var(--error);
-
-      background-color: var(--tinte-error);
-      border-color: var(--error);
+      background-color: var(--tinte-cinta);
+      border-block-end-color: var(--cinta);
+      caret-color: var(--cinta);
+      outline-color: var(--cinta);
     }
   }
 
   .controles__error {
-    font-size: var(--paso--1);
+    padding-inline: var(--sangria);
     font-weight: var(--peso-medio);
-    text-align: center;
-    color: var(--error);
+    color: var(--cinta);
     visibility: hidden; /* reserva su línea en todos los estados para que nada salte */
 
-    .prueba:has(.campo[aria-invalid="true"]) & {
+    .campo[aria-invalid="true"] + & {
       visibility: visible;
     }
   }
@@ -240,9 +208,7 @@
   /* Ayuda según el estado; visibility y no display, para que la celda conserve su alto */
 
   .ayuda {
-    font-size: var(--paso--1);
-    text-align: center;
-    color: var(--texto-suave);
+    color: var(--tinta-suave);
   }
 
   .app:not([data-estado="parado"]) .ayuda--parado,
@@ -251,23 +217,21 @@
   }
 
   kbd {
-    padding: 0.05em 0.4em;
+    padding: 0.05em 0.45em;
     font-family: var(--fuente-interfaz);
     font-size: 0.9em;
     font-weight: var(--peso-medio);
     white-space: nowrap;
-    color: var(--texto);
-    background-color: var(--superficie);
-    border: 1px solid var(--borde);
-    border-block-end-width: 2px;
-    border-radius: var(--radio-pequeno);
+    color: var(--tinta);
+    background-color: var(--renglon);
+    border-radius: var(--radio);
   }
 
-  /* Botón: los estados solo cambian variables locales y no compiten en especificidad */
+  /* Botón de tinta: los estados solo cambian variables locales y no compiten en especificidad */
 
   .boton {
-    --_fondo: var(--accion);
-    --_tinta: var(--sobre-accion);
+    --_fondo: var(--tinta);
+    --_tinta: var(--papel);
 
     min-block-size: var(--control);
     min-inline-size: 10ch;
@@ -275,7 +239,7 @@
     font-weight: var(--peso-medio);
     color: var(--_tinta);
     background-color: var(--_fondo);
-    border: 2px solid var(--accion);
+    border: 2px solid var(--tinta);
     border-radius: var(--radio);
     cursor: pointer;
 
@@ -290,7 +254,7 @@
     /* Solo con puntero real: en táctil el hover se queda pegado tras tocar */
     @media (hover: hover) {
       &:hover:not(:disabled) {
-        --_fondo: var(--accion-intensa);
+        --_fondo: var(--tinta-intensa);
       }
     }
 
@@ -300,7 +264,7 @@
 
     &:disabled {
       --_fondo: transparent;
-      --_tinta: var(--texto-suave);
+      --_tinta: var(--tinta-suave);
       border-color: var(--borde);
       border-style: dashed;
       cursor: not-allowed;
@@ -310,7 +274,7 @@
   /* En marcha pasa a contorno: misma forma (semejanza) y menos peso que el campo */
   .app[data-estado="activo"] .boton {
     --_fondo: transparent;
-    --_tinta: var(--accion);
+    --_tinta: var(--tinta);
 
     &::before {
       clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
@@ -318,9 +282,79 @@
 
     @media (hover: hover) {
       &:hover {
-        --_fondo: var(--tinte-accion);
+        --_fondo: var(--renglon);
       }
     }
+  }
+
+  /* Detalle de la prueba */
+
+  .informe__titulo {
+    font-size: var(--paso-0);
+    font-weight: var(--peso-fuerte);
+  }
+
+  .informe__record {
+    font-weight: var(--peso-fuerte);
+  }
+
+  .fallos__resumen {
+    max-inline-size: var(--medida);
+  }
+
+  /* Teclado de fallos: teclas redondas como las de la M40, más rojas cuanto más se han fallado */
+
+  .tecla {
+    font: var(--peso-medio) var(--paso-0) / 1 var(--fuente-interfaz);
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+    background-color: var(--calor-0);
+    border-radius: 50%;
+
+    &[data-nivel="1"] { color: var(--tinta); background-color: var(--calor-1); }
+    &[data-nivel="2"] { color: var(--tinta); background-color: var(--calor-2); }
+    &[data-nivel="3"] { color: var(--tinta); background-color: var(--calor-3); }
+    &[data-nivel="4"] { color: var(--sobre-calor-4); background-color: var(--calor-4); }
+  }
+
+  .tecla__cuenta {
+    font-size: var(--paso--1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Con teclas pequeñas las cuentas las da la leyenda */
+  @container teclado (inline-size < 30rem) {
+    .tecla {
+      font-size: var(--paso--1);
+    }
+
+    .tecla__cuenta {
+      display: none;
+    }
+  }
+
+  /* Lámina: la máquina en escala de grises, sin marco ni nada encima */
+
+  .lamina__foto {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: 50% 30%;
+    filter: grayscale(1);
+  }
+
+  @media (width >= 60rem) {
+    .lamina__foto {
+      aspect-ratio: auto;
+    }
+  }
+
+  .lamina__credito {
+    max-inline-size: 48ch;
+    margin-block-start: var(--espacio-2);
+    font-size: var(--paso--1);
+    color: var(--tinta-suave);
   }
 
   /* Con el teclado virtual abierto la ventana encoge (interactive-widget=resizes-content);
@@ -330,6 +364,7 @@
       padding-block: var(--espacio-2);
 
       & .cabecera,
+      & .lamina,
       & .pie,
       & .ayuda {
         display: none;
@@ -339,16 +374,8 @@
         gap: var(--espacio-2);
       }
 
-      & .marcador {
-        padding-block: var(--espacio-1);
-      }
-
-      & .marcador__valor {
-        font-size: var(--paso-2);
-      }
-
-      & .escenario {
-        min-block-size: 0;
+      & .hoja {
+        --cuerpo-max: 3.25rem;
         padding-block: var(--espacio-2);
       }
     }
@@ -364,20 +391,65 @@
       transition: clip-path var(--duracion);
     }
 
-    /* El resultado entra con un fundido y sube un poco */
-    .resultado {
-      transition: opacity var(--duracion) ease-out, translate var(--duracion) ease-out;
+    /* El golpe del tipo: la cifra sube y vuelve, sin cambiar de color */
+    .marcador__valor--golpe {
+      animation: golpe var(--golpe) var(--curva);
     }
 
+    @keyframes golpe {
+      from { transform: translateY(-0.15em); }
+    }
+
+    /* Resultado y detalle entran desde @starting-style porque pasan de display: none a visibles */
+    .resultado,
+    .informe__titulo,
+    .informe__datos,
+    .fallos,
+    .teclado__fila {
+      transition: opacity var(--entrada) var(--curva), transform var(--entrada) var(--curva);
+    }
+
+    .informe__datos { transition-delay: var(--escalon); }
+    .fallos { transition-delay: calc(var(--escalon) * 2); }
+    .teclado__fila:nth-child(1) { transition-delay: calc(var(--escalon) * 3); }
+    .teclado__fila:nth-child(2) { transition-delay: calc(var(--escalon) * 4); }
+    .teclado__fila:nth-child(3) { transition-delay: calc(var(--escalon) * 5); }
+
     @starting-style {
-      .resultado {
+      .resultado,
+      .informe__titulo,
+      .informe__datos,
+      .fallos,
+      .teclado__fila {
         opacity: 0;
-        translate: 0 var(--espacio-2);
+        transform: translateY(var(--espacio-2));
       }
     }
   }
 
-  /* Alto contraste del sistema: el error se marca con los colores de resaltado */
+  @media (prefers-contrast: more) {
+    :root {
+      --guia: var(--tinta-suave);
+      --borde: var(--tinta-suave);
+      --mesa: light-dark(hsl(var(--tono) 7% 85%), hsl(var(--tono) 7% 6%));
+      --calor-3: light-dark(hsl(var(--tono) 68% 74%), hsl(var(--tono) 62% 36%));
+    }
+
+    .tecla[data-nivel="0"] {
+      color: var(--tinta);
+    }
+
+    .campo {
+      border-block-end-width: 3px;
+    }
+
+    .letra--error,
+    .letra--sobrante {
+      text-decoration-thickness: 0.09em;
+    }
+  }
+
+  /* Alto contraste del sistema: el error y las teclas falladas se marcan con los colores de resaltado */
 
   @media (forced-colors: active) {
     .letra--error,
@@ -396,14 +468,48 @@
       background-color: GrayText;
     }
 
-    /* box-shadow desaparece en este modo */
+    /* El rodillo se mantiene con el color del texto; la cinta es decorativa y se retira */
+    .hoja::before {
+      forced-color-adjust: none;
+      background-color: CanvasText;
+    }
+
+    .hoja::after {
+      display: none;
+    }
+
+    /* El borde completo se descuenta de la sangría para no descuadrar las letras */
+    .campo {
+      --_borde: 2px;
+
+      padding-inline: calc(var(--sangria) - var(--_borde));
+      border: var(--_borde) solid;
+    }
+
     .campo:focus-visible {
       outline: var(--anillo) solid Highlight;
     }
 
     .campo[aria-invalid="true"] {
+      --_borde: 4px;
+
       border-style: double;
-      border-width: 4px;
+    }
+
+    .tecla {
+      forced-color-adjust: none;
+      color: CanvasText;
+      background-color: Canvas;
+      border: 1px solid CanvasText;
+
+      &:not([data-nivel="0"]) {
+        color: MarkText;
+        background-color: Mark;
+      }
+    }
+
+    .tecla__cuenta {
+      display: block;
     }
   }
 }
