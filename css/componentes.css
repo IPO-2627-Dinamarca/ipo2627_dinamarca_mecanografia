@@ -1,21 +1,11 @@
 @layer componentes {
-  /* Cabecera y pie */
+  /* Cabecera: solo el título, acotado también por el alto de la ventana */
 
   .cabecera__titulo {
-    font-size: clamp(var(--paso-3), 1.2rem + 3vw, var(--paso-5));
+    font-size: min(clamp(var(--paso-4), 1.25rem + 3.5vw, 4.5rem), 10dvh);
     font-weight: var(--peso-fuerte);
     line-height: 1;
     letter-spacing: -0.03em;
-  }
-
-  .cabecera__lema {
-    max-inline-size: var(--medida);
-    text-wrap: pretty;
-  }
-
-  .pie {
-    font-size: var(--paso--1);
-    color: var(--tinta-suave);
   }
 
   /* Límites: botones de tinta como el de Iniciar; el elegido va relleno */
@@ -79,6 +69,13 @@
     }
   }
 
+  /* En la columna lateral los botones van en rejilla con hueco y no se solapan */
+  @media (width >= 64rem) {
+    .selector__opcion + .selector__opcion {
+      margin-inline-start: 0;
+    }
+  }
+
   @media (hover: hover) {
     .ajustes:enabled .selector__opcion:not(:has(:checked)):hover {
       background-color: var(--renglon);
@@ -119,9 +116,10 @@
 
   .hoja {
     --rodillo: 1rem;
+    --_margen: var(--espacio-4);
 
     margin-block-start: calc(var(--rodillo) / 2);
-    padding: var(--espacio-5) var(--espacio-4) var(--espacio-4);
+    padding: var(--respiro) var(--_margen) var(--_margen);
     background-color: var(--papel);
     border: 1px solid transparent;
 
@@ -141,11 +139,18 @@
       content: "";
       position: absolute;
       inset-block-start: calc(var(--rodillo) * 0.75);
-      inset-inline-start: calc(var(--espacio-4) + var(--sangria));
+      inset-inline-start: calc(var(--_margen) + var(--sangria));
       inline-size: 2.5rem;
       block-size: 0.5rem;
       background-color: var(--cinta);
       border-block-start: 0.25rem solid var(--tinta);
+    }
+  }
+
+  /* En columna estrecha el margen cede sitio a la palabra y al mensaje de error */
+  @container principal (inline-size < 30rem) {
+    .hoja {
+      --_margen: var(--espacio-3);
     }
   }
 
@@ -444,7 +449,6 @@
 
       & .cabecera,
       & .ajustes,
-      & .pie,
       & .ayuda,
       & .cola__palabra:nth-child(n + 2) {
         display: none;
