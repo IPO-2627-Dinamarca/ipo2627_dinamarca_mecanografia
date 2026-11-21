@@ -54,8 +54,7 @@ con el teclado de fallos). Esto sustituye la columna única de 44rem del punto �
   `minmax(var(--ancho-ajustes), var(--ancho-detalle)) minmax(30rem, var(--ancho-columna)) var(--ancho-detalle)`,
   con los tokens nuevos `--ancho-ajustes: 11rem` y `--ancho-detalle: 18rem`, y áreas
   `". marcadores ." / "ajustes prueba informe"`. Con sitio las dos laterales miden 18rem y la hoja queda centrada
-  bajo el título. Los límites se apilan en su columna y sus botones van en una rejilla
-  `repeat(auto-fit, minmax(3rem, 1fr))` con hueco de `--espacio-1` (sin el solape de 2px de la fila).
+  bajo el título. Los límites se apilan en su columna (su disposición cambió en la revisión 3).
 - Detalle: `section.informe` sale de `.prueba` y pasa a ser hermana en la rejilla, después de ella, con título
   `h2`. Su columna está reservada siempre y el detalle ocupa solo la fila de la hoja, así que su alto no puede
   empujar la hoja ni el botón (`align-items: start` en `.principal`). Las teclas del teclado de fallos se juntan
@@ -89,6 +88,70 @@ misma posición en los tres estados en todos los tamaños.
 Antes de este cambio, a 1366 × 768 la página medía 1001px al empezar y 1358px con el resultado. A 320 × 568 no
 cabe: la hoja y el botón ya ocupan más que la ventana, y al escribir el navegador desplaza la página hasta el
 campo.
+
+### Revisión del 2026-11-22 (3): propuesta visual
+
+Mejoras elegidas por el usuario a partir de una propuesta de dirección de arte y de un estudio de cómo muestran el
+texto, el cursor, el progreso y el resultado los test de mecanografía más conocidos. Se han tomado patrones de
+interacción, no el aspecto de ninguno.
+
+- Título: system-ui en `--peso-normal`, `letter-spacing: -0.02em` y `min(clamp(2rem, 1.5rem + 3vw, 4.25rem), 8dvh)`.
+  No pasa del 80 % del cuerpo de la palabra (61px frente a 77px a 1366 × 768): domina la palabra, como pide la
+  sección 2.
+- Botón: `min-inline-size: 9rem`, el ancho de «■ Detener». Antes «Iniciar» medía 16px menos y la ayuda saltaba.
+- Campo: `outline-offset: 0` con foco, para que el anillo y el borde inferior se vean como una sola línea.
+- Modo compacto: empieza por debajo de 36rem de alto (antes 34rem); así la prueba cabe a 320 × 568.
+- Rodillo de progreso: con una prueba con límite en marcha, la vista escribe `--progreso` (0 a 1) en `.hoja`. El
+  modelo lo calcula como el mayor avance de los límites que existan, así que la barra llega al final justo cuando
+  acaba la prueba. `.hoja::before` pinta la tinta con `linear-gradient` de corte duro y `background-size`
+  proporcional sobre una pista `color-mix(in hsl, var(--tinta) 30%, var(--mesa))` (tinta frente a pista 7,05 en
+  claro y 6,40 en oscuro). Transición lineal de 200ms solo sin movimiento reducido; en `forced-colors`,
+  `CanvasText` sobre `GrayText`. Los segundos transcurridos siguen en los marcadores, como pide el enunciado.
+- Límites: `.ajustes` es contenedor; la leyenda «Límites de la prueba» se ve, con el estilo y la altura de
+  «Detalle de la prueba»; debajo, la nota «La prueba acaba con el primero que se cumpla.» (`aria-describedby`).
+  Por debajo de 48rem leyenda y nota se ocultan a la vista, pero no al lector de pantalla. Cada grupo es una tira
+  con un solo borde de 2px, separadores de 1px y radio solo en los extremos (región común). Bloqueados: borde
+  discontinuo y el elegido relleno de `--tinta-suave` (7,7:1 con el texto en los dos modos).
+- Marcadores entre 64 y 80rem: las PPM van siempre en una segunda línea, porque con topes de tres cifras los tres
+  marcadores no caben en la columna central (554px frente a 480px a 1024) y partirse a mitad de prueba bajaba la
+  hoja 41px.
+- Cursor deslizante: la vista escribe `--cursor` (caracteres tecleados) en `.muestra` y `.muestra::after` dibuja
+  un subrayado de 1ch desplazado `calc(var(--cursor) * 1ch)`, con transición de 100ms. Sustituye al subrayado de
+  `.letra--cursor`, que desaparece. El divisor del cuerpo pasa a `var(--letras) + 1` para que el cursor quepa tras
+  la última letra.
+- Cola que se aleja: la 2.ª y la 3.ª palabra al 80 % y al 72 % de `--guia` sobre el papel (3,56 y 3,07 en claro;
+  4,12 y 3,6 en oscuro; son texto grande en negrita). Con `prefers-contrast: more`, las tres en `--tinta-suave`.
+- Modo foco: con la prueba en marcha, título y límites a opacidad 0,5 (el título conserva 3,15:1). No se aplica
+  con `prefers-contrast: more` ni en `forced-colors`.
+- Detalle compacto: tiempo, precisión y mejor marca en una fila de tres columnas, cifra a `--paso-1` sobre el
+  nombre (a `--paso-2` o mayor no caben en 18rem con sus unidades). Orden: datos, ritmo, teclado de fallos. En
+  `forced-colors` las cuentas de las teclas se ocultan si el teclado es estrecho: no caben en el círculo y las da
+  el resumen.
+- Gráfica de ritmo (`figure.ritmo`, estilos en `css/ritmo.css`): una sola serie, la PPM media acumulada en cada
+  segundo desde el quinto (el mismo umbral que las PPM en vivo), con el último punto en el instante final para que
+  coincida con la cifra grande. Una media móvil daría escalones de 12 ppm con una palabra cada uno o dos segundos.
+  Los fallos son marcas de 2px en `--cinta` bajo el eje, sin segundo eje. Una línea de referencia en el máximo
+  redondeado a decenas, eje en `--borde`, textos en `--tinta-suave` a `--paso--1`, línea de 2px en `--tinta` con
+  punto final etiquetado. `viewBox` de 288 × 112, `vector-effect: non-scaling-stroke`. El SVG lleva `aria-hidden`
+  y el `figcaption` visible lo resume en texto; con menos de 10s no se dibuja.
+- Hoja escrita (`ol.escrita`): al terminar, en las celdas de la cola y del campo, las palabras aceptadas en Courier
+  negrita a `--paso-1` y en `--tinta`; las que tuvieron fallos con el subrayado ondulado de `.letra--error`. Ocupa
+  esas celdas con `contain: size`, así que no cambia el alto de la hoja, y lo que no cabe se recorta con un
+  desvanecido de una línea (`mask-image`). Lleva `aria-hidden`; el anuncio final nombra las palabras con fallos.
+
+Medidas con Chromium tras esta revisión (alto del contenido / alto de la ventana; sin desplazamiento horizontal en
+ninguno). El campo y el botón están en la misma posición y con el mismo tamaño en los tres estados.
+
+| Ventana | Inicio | Prueba con error | Resultado con gráfica |
+|---|---|---|---|
+| 1920 × 1080 | 786 | 786 | 786 |
+| 1440 × 900 | 756 | 756 | 756 |
+| 1366 × 768 | 698 | 698 | 698 |
+| 1366 × 657 | 639 | 639 | 639 |
+| 1280 × 720 | 672 | 672 | 672 |
+| 1024 × 768 | 732 | 732 | 732 |
+| 390 × 844 | 823 | 823 | 1165 (detalle debajo) |
+| 320 × 568 | 845 | 507 (compacto) | 1194 |
 ---
 
 ## 1. Concepto
