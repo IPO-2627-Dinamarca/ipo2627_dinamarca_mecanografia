@@ -1,12 +1,11 @@
 @layer layout {
-  /* Una columna anclada arriba; la lámina va después de la prueba en el DOM y en pantalla */
+  /* Una sola columna centrada y anclada arriba */
   .app {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "cabecera"
       "principal"
-      "lamina"
       "pie";
     align-content: start;
     gap: var(--espacio-5);
@@ -15,28 +14,8 @@
     padding-inline: max(var(--espacio-3), (100% - var(--ancho-columna)) / 2);
   }
 
-  /* Escritorio: dos columnas desiguales, la máquina a la izquierda y la hoja a la derecha */
-  @media (width >= 60rem) {
-    .app {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      grid-template-rows: auto 1fr auto;
-      grid-template-areas:
-        "cabecera principal"
-        "lamina   principal"
-        "pie      pie";
-      column-gap: var(--espacio-6);
-      padding-inline: max(var(--espacio-5), (100% - var(--ancho-maximo)) / 2);
-    }
-
-    .principal,
-    .lamina {
-      align-self: start;
-    }
-  }
-
   .cabecera { grid-area: cabecera; }
   .principal { grid-area: principal; }
-  .lamina { grid-area: lamina; }
   .pie { grid-area: pie; }
 
   .cabecera {
@@ -49,6 +28,47 @@
     container: principal / inline-size;
     display: grid;
     gap: var(--espacio-3);
+  }
+
+  /* Límites: los dos grupos en una fila que se parte si no cabe */
+  .ajustes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-2) var(--espacio-5);
+  }
+
+  /* Con float la leyenda deja de ir en el borde y se coloca como un elemento más de la fila */
+  .selector {
+    display: flex;
+    align-items: center;
+  }
+
+  .selector__titulo {
+    float: inline-start;
+    margin-inline-end: var(--espacio-2);
+  }
+
+  .selector__opcion {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+  }
+
+  /* Columna estrecha: cada grupo en su línea, con el título encima y los botones a todo el ancho */
+  @container principal (inline-size < 30rem) {
+    .selector {
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+    }
+
+    .selector__titulo {
+      flex-basis: 100%;
+      margin-block-end: var(--espacio-1);
+    }
+
+    .selector__opcion {
+      flex: 1;
+    }
   }
 
   .marcadores,
@@ -65,8 +85,9 @@
     gap: 0.35em;
   }
 
-  /* Cifra delante y nombre detrás; el lector de pantalla sigue el orden del DOM (dt, dd) */
-  .marcador__valor {
+  /* Cifra y tope delante y nombre detrás; el lector de pantalla sigue el orden del DOM (dt, dd) */
+  .marcador__valor,
+  .marcador__tope {
     order: -1;
   }
 
@@ -94,12 +115,13 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "linea"
+      "cola"
       "controles";
     /* Proporcional al cuerpo: deja sitio al subrayado ondulado de la letra errónea */
     gap: calc(var(--cuerpo-max) * 0.2);
     --cuerpo-max: 5.5rem;
     /* La palabra ocupa el 93 % del ancho útil de la muestra (avance de 0,6 em por letra) */
-    --cuerpo: clamp(2rem, calc((100cqi - 2 * var(--sangria)) * 1.55 / var(--letras, 8)), var(--cuerpo-max));
+    --cuerpo: clamp(1.75rem, calc((100cqi - 2 * var(--sangria)) * 1.55 / var(--letras, 8)), var(--cuerpo-max));
   }
 
   @container principal (inline-size < 30rem) {
@@ -123,6 +145,14 @@
 
   .aviso {
     min-block-size: calc(var(--cuerpo-max) * 1.15);
+  }
+
+  /* Las siguientes palabras, de mayor a menor, en un alto fijo */
+  .cola {
+    grid-area: cola;
+    display: grid;
+    align-content: start;
+    block-size: calc((var(--paso-3) + var(--paso-2) + var(--paso-1)) * 1.2);
   }
 
   /* La unidad puede partirse; su última línea se apoya en la línea base de la cifra */
@@ -205,6 +235,6 @@
     aspect-ratio: 1;
   }
 
+  /* La fila de en medio entra media tecla; en la de abajo, ⇧ ocupa dos medias columnas y la z queda en la tercera */
   .teclado__fila:nth-child(2) > :first-child { grid-column: 2 / span 2; }
-  .teclado__fila:nth-child(3) > :first-child { grid-column: 3 / span 2; }
 }
