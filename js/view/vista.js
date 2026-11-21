@@ -5,8 +5,10 @@ const SEGUNDOS = new Intl.NumberFormat('es', {
 const PORCENTAJE = new Intl.NumberFormat('es', { style: 'percent', maximumFractionDigits: 0 });
 const LISTA = new Intl.ListFormat('es', { type: 'conjunction' });
 
-// Teclado español: la ´ está a la derecha de la ñ y recoge los fallos de tilde y diéresis.
-const FILAS = ['qwertyuiop', 'asdfghjklñ´', 'zxcvbnm'];
+// Teclado español: la ´ está a la derecha de la ñ y recoge los fallos de tilde y diéresis;
+// ⇧ recoge los de mayúscula.
+const FILAS = ['qwertyuiop', 'asdfghjklñ´', '⇧zxcvbnm'];
+const NOMBRES_TECLA = { '´': 'tilde', '⇧': 'mayúsculas' };
 const NIVELES = 4;
 const TECLAS_EN_RESUMEN = 5;
 
@@ -17,7 +19,7 @@ const INSERCIONES_BLOQUEADAS = new Set([
   'insertFromPaste', 'insertFromDrop', 'insertFromYank', 'insertFromPasteAsQuotation',
 ]);
 
-const nombreTecla = (tecla) => (tecla === '´' ? 'tilde' : tecla);
+const nombreTecla = (tecla) => NOMBRES_TECLA[tecla] ?? tecla;
 
 const textoCorrectas = (n) => `${n} ${n === 1 ? 'palabra correcta' : 'palabras correctas'}`;
 
@@ -28,15 +30,39 @@ function crearLetra(letra) {
   return span;
 }
 
+function crearPalabraEnCola(texto) {
+  const li = document.createElement('li');
+  li.className = 'cola__palabra';
+  li.textContent = texto;
+  return li;
+}
+
 // Solo se toca el DOM si el valor cambia: el temporizador refresca varias veces por segundo.
 function escribirTexto(nodo, texto) {
   if (nodo.textContent !== texto) nodo.textContent = texto;
 }
 
+// Leer una medida fuerza el reflow y reinicia la animación aunque la anterior no haya acabado.
+function reiniciarAnimacion(nodo, clase) {
+  nodo.classList.remove(clase);
+  void nodo.offsetWidth;
+  nodo.classList.add(clase);
+}
+
+const leerLimite = (raiz, nombre) => {
+  const valor = raiz.querySelector(`input[name="${nombre}"]:checked`)?.value ?? '';
+  return valor === '' ? null : Number(valor);
+};
+
+const textoTope = (limite) => (limite === null ? '' : `de ${ENTERO.format(limite)}`);
+
 /** Presentación en el DOM. Recibe valores ya calculados y avisa al controlador de lo que hace el usuario. */
 export class Vista {
   #app;
   #palabra;
+  #cola;
+  #ajustes;
+  #topes;
   #correctas;
   #segundos;
   #ppm;
@@ -55,6 +81,9 @@ export class Vista {
     const nodo = (nombre) => raiz.querySelector(`[data-vista="${nombre}"]`);
     this.#app = nodo('app');
     this.#palabra = nodo('palabra');
+    this.#cola = nodo('cola');
+    this.#ajustes = nodo('ajustes');
+    this.#topes = { palabras: nodo('tope-palabras'), segundos: nodo('tope-segundos') };
     this.#correctas = nodo('correctas');
     this.#segundos = nodo('segundos');
     this.#ppm = nodo('ppm');
@@ -127,7 +156,8 @@ export class Vista {
 
       if (evento.key === 'Escape') {
         manejador('detener');
-      } else if (evento.key === 'Enter' && !evento.target.closest('a, button, input')) {
+      } else if (evento.key === 'Enter'
+        && !evento.target.closest('a, button, input:not([type="radio"])')) {
         manejador('comenzar');
       } else if (evento.key.length === 1 && evento.key !== ' ' && evento.target !== this.#campo) {
         manejador('enfocar');
@@ -144,8 +174,19 @@ export class Vista {
     this.#palabra.textContent = '¿Empezamos?';
   }
 
-  mostrarPrueba() {
+  /** Límites elegidos en los selectores; null es sin límite. */
+  get limite() {
+    return {
+      segundos: leerLimite(this.#ajustes, 'segundos'),
+      palabras: leerLimite(this.#ajustes, 'palabras'),
+    };
+  }
+
+  /** @param {{segundos: number|null, palabras: number|null}} limite */
+  mostrarPrueba(limite) {
     this.#cambiarEstado('activo');
+    this.#topes.palabras.textContent = textoTope(limite.palabras);
+    this.#topes.segundos.textContent = textoTope(limite.segundos);
     this.#resultado.panel.hidden = true;
     this.#informe.hidden = true;
     this.#palabra.hidden = false;
@@ -154,8 +195,12 @@ export class Vista {
     this.#campo.focus();
   }
 
-  /** Crea un span por letra; las letras se actualizan después con mostrarProgreso(). */
-  mostrarPalabra(palabra) {
+  /**
+   * Crea un span por letra de la palabra en curso, que se actualizan después con
+   * mostrarProgreso(), y pone debajo las siguientes.
+   */
+  mostrarPalabra(palabra, siguientes) {
+    this.#cola.replaceChildren(...siguientes.map(crearPalabraEnCola));
     this.#letras = [...palabra].map(crearLetra);
     this.#palabra.replaceChildren(...this.#letras);
     this.#letras[0].classList.add('letra--cursor');
@@ -205,12 +250,10 @@ export class Vista {
     this.#campo.focus();
   }
 
-  /** Golpe del tipo en el contador de correctas. */
+  /** Golpe del tipo en el contador de correctas y subida de la hoja una línea. */
   celebrarAcierto() {
-    this.#correctas.classList.remove('marcador__valor--golpe');
-    // Leer una medida fuerza el reflow y reinicia la animación aunque la anterior no haya acabado.
-    void this.#correctas.offsetWidth;
-    this.#correctas.classList.add('marcador__valor--golpe');
+    reiniciarAnimacion(this.#correctas, 'marcador__valor--golpe');
+    reiniciarAnimacion(this.#hoja, 'hoja--avanza');
   }
 
   /**
@@ -305,5 +348,6 @@ export class Vista {
     this.#boton.setAttribute('aria-keyshortcuts', activo ? 'Escape' : 'Enter');
     this.#boton.disabled = estado !== 'activo' && estado !== 'parado';
     this.#campo.disabled = !activo;
+    this.#ajustes.disabled = estado !== 'parado';
   }
 }
