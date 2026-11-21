@@ -44,12 +44,24 @@ export class Controlador {
   }
 
   #comenzar() {
-    this.#modelo.comenzar();
-    this.#vista.mostrarPrueba();
-    this.#vista.mostrarPalabra(this.#modelo.palabra);
+    this.#modelo.comenzar(this.#vista.limite);
+    this.#vista.mostrarPrueba(this.#modelo.limite);
+    this.#vista.mostrarPalabra(this.#modelo.palabra, this.#modelo.siguientes);
     this.#refrescarMarcadores();
     this.#vista.anunciar(`Prueba en marcha. Primera palabra: ${this.#modelo.palabra}.`);
-    this.#intervalo = setInterval(() => this.#refrescarMarcadores(), REFRESCO_MS);
+    this.#intervalo = setInterval(() => this.#tic(), REFRESCO_MS);
+  }
+
+  #tic() {
+    if (!this.#terminarSiToca()) this.#refrescarMarcadores();
+  }
+
+  // El límite se comprueba en cada tic y en cada pulsación: la que llega después de cumplirse,
+  // antes del siguiente tic, termina la prueba en lugar de contar como error.
+  #terminarSiToca() {
+    if (!this.#modelo.activo || !this.#modelo.limiteAlcanzado) return false;
+    this.#detener();
+    return true;
   }
 
   #detener() {
@@ -73,16 +85,14 @@ export class Controlador {
   }
 
   #escribir(texto) {
-    if (this.#modelo.escribir(texto)) {
-      this.#acertar();
-      return;
-    }
+    if (this.#terminarSiToca()) return;
+    this.#modelo.escribir(texto);
     this.#vista.mostrarProgreso(this.#modelo.progreso());
     this.#vista.marcarError(this.#modelo.hayError);
   }
 
   #confirmar(texto) {
-    if (texto === '') return;
+    if (texto === '' || this.#terminarSiToca()) return;
     if (this.#modelo.confirmar(texto)) {
       this.#acertar();
       return;
@@ -92,9 +102,10 @@ export class Controlador {
   }
 
   #acertar() {
+    if (this.#terminarSiToca()) return;
     this.#vista.limpiarCampo();
     this.#vista.marcarError(false);
-    this.#vista.mostrarPalabra(this.#modelo.palabra);
+    this.#vista.mostrarPalabra(this.#modelo.palabra, this.#modelo.siguientes);
     this.#refrescarMarcadores();
     this.#vista.celebrarAcierto();
     this.#vista.anunciar(this.#modelo.palabra);
