@@ -38,7 +38,6 @@
     --paso-2: calc(var(--paso-1) * var(--razon));
     --paso-3: calc(var(--paso-2) * var(--razon));
     --paso-4: calc(var(--paso-3) * var(--razon));
-    --paso-5: calc(var(--paso-4) * var(--razon));
 
     --peso-normal: 400;
     --peso-medio: 600;
@@ -51,8 +50,11 @@
     --espacio-3: 1rem;
     --espacio-4: 1.5rem;
     --espacio-5: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+    --respiro: min(var(--espacio-5), 4dvh); /* exterior vertical: lo acota también el alto de la ventana */
     --sangria: 0.75rem; /* margen interior común a muestra y campo */
     --ancho-columna: 44rem;
+    --ancho-ajustes: 11rem;
+    --ancho-detalle: 18rem;
     --medida: 60ch;
 
     --radio: 0.125rem;
