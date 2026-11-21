@@ -32,7 +32,6 @@
   <div class="app" data-estado="error" data-vista="app">
     <header class="cabecera">
       <h1 class="cabecera__titulo">Mecanografía</h1>
-      <p class="cabecera__lema">Teclea cada palabra de la hoja y pulsa Espacio para pasar a la siguiente. Si pones límite de tiempo y de palabras, la prueba acaba con lo primero que se cumpla.</p>
     </header>
 
     <main class="principal">
@@ -111,38 +110,34 @@
             Pulsa <kbd>Espacio</kbd> al acabar cada palabra. <kbd>Esc</kbd> detiene la prueba.
           </p>
         </div>
+      </section>
 
-        <section class="informe" data-vista="informe" aria-labelledby="informe-titulo" hidden>
-          <h3 class="informe__titulo" id="informe-titulo">Detalle de la prueba</h3>
-          <dl class="informe__datos">
-            <div class="marcador">
-              <dt class="marcador__etiqueta">tiempo</dt>
-              <dd class="marcador__valor" data-vista="resultado-tiempo">0 s</dd>
-            </div>
-            <div class="marcador">
-              <dt class="marcador__etiqueta">precisión</dt>
-              <dd class="marcador__valor" data-vista="resultado-precision">—</dd>
-            </div>
-            <div class="marcador">
-              <dt class="marcador__etiqueta">mejor marca</dt>
-              <dd class="marcador__valor" data-vista="resultado-marca">—</dd>
-            </div>
-          </dl>
-          <p class="informe__record" data-vista="resultado-record" hidden>Nueva mejor marca.</p>
+      <section class="informe" data-vista="informe" aria-labelledby="informe-titulo" hidden>
+        <h2 class="informe__titulo" id="informe-titulo">Detalle de la prueba</h2>
+        <dl class="informe__datos">
+          <div class="marcador">
+            <dt class="marcador__etiqueta">tiempo</dt>
+            <dd class="marcador__valor" data-vista="resultado-tiempo">0 s</dd>
+          </div>
+          <div class="marcador">
+            <dt class="marcador__etiqueta">precisión</dt>
+            <dd class="marcador__valor" data-vista="resultado-precision">—</dd>
+          </div>
+          <div class="marcador">
+            <dt class="marcador__etiqueta">mejor marca</dt>
+            <dd class="marcador__valor" data-vista="resultado-marca">—</dd>
+          </div>
+        </dl>
+        <p class="informe__record" data-vista="resultado-record" hidden>Nueva mejor marca.</p>
 
-          <figure class="fallos">
-            <figcaption class="fallos__resumen" data-vista="fallos-resumen"></figcaption>
-            <div class="teclado" data-vista="teclado" aria-hidden="true"></div>
-          </figure>
-        </section>
+        <figure class="fallos">
+          <figcaption class="fallos__resumen" data-vista="fallos-resumen"></figcaption>
+          <div class="teclado" data-vista="teclado" aria-hidden="true"></div>
+        </figure>
       </section>
 
       <p class="visualmente-oculto" data-vista="anuncio" aria-live="polite"></p>
     </main>
-
-    <footer class="pie">
-      <p>Grupo Dinamarca · IPO 2026/27</p>
-    </footer>
   </div>
 </body>
 </html>
