@@ -54,7 +54,12 @@
           <label class="selector__opcion"><input type="radio" name="palabras" value="50">50</label>
           <label class="selector__opcion"><input type="radio" name="palabras" value="100">100</label>
         </fieldset>
-        <p class="ajustes__nota" id="ajustes-nota">La prueba acaba con el primero que se cumpla.</p>
+        <fieldset class="selector">
+          <legend class="selector__titulo">Modo</legend>
+          <label class="selector__opcion"><input type="radio" name="modo" value="libre" checked>Libre</label>
+          <label class="selector__opcion"><input type="radio" name="modo" value="estricto">Estricto</label>
+        </fieldset>
+        <p class="ajustes__nota" id="ajustes-nota">La prueba acaba con el primero que se cumpla. Libre: Espacio pasa siempre; lo que no corrijas cuenta como fallo grave.</p>
       </fieldset>
 
       <h2 class="visualmente-oculto">Marcadores</h2>
@@ -132,12 +137,28 @@
             <dd class="marcador__valor" data-vista="resultado-marca">—</dd>
           </div>
         </dl>
+        <dl class="informe__datos informe__datos--errores">
+          <div class="marcador">
+            <dt class="marcador__etiqueta">corregidos</dt>
+            <dd class="marcador__valor" data-vista="resultado-corregidos">0</dd>
+          </div>
+          <div class="marcador">
+            <dt class="marcador__etiqueta">por corrección</dt>
+            <dd class="marcador__valor" data-vista="resultado-correccion">—</dd>
+          </div>
+          <div class="marcador">
+            <dt class="marcador__etiqueta">sin corregir</dt>
+            <dd class="marcador__valor" data-vista="resultado-sin-corregir">0</dd>
+          </div>
+        </dl>
         <p class="informe__record" data-vista="resultado-record" hidden>Nueva mejor marca.</p>
 
         <figure class="ritmo">
           <svg class="ritmo__grafica" data-vista="ritmo" viewBox="0 0 288 112" aria-hidden="true" focusable="false"></svg>
           <figcaption class="ritmo__resumen" data-vista="ritmo-resumen"></figcaption>
         </figure>
+
+        <p class="informe__practicar" data-vista="practicar" hidden></p>
 
         <figure class="fallos">
           <figcaption class="fallos__resumen" data-vista="fallos-resumen"></figcaption>
