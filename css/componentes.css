@@ -318,7 +318,8 @@
     color: var(--tinta-suave);
   }
 
-  /* Hoja escrita: las palabras aceptadas, una tras otra; las que tuvieron fallos, con el subrayado del error */
+  /* Hoja escrita: las palabras pasadas, una tras otra; las corregidas con el subrayado del error y las sin corregir
+     con lo escrito tachado junto a la palabra pedida */
   .escrita {
     margin: 0;
     padding: 0 var(--sangria);
@@ -329,11 +330,31 @@
     mask-image: linear-gradient(to bottom, #000 calc(100% - 1lh), transparent);
   }
 
-  .escrita__palabra--fallo {
+  .escrita__palabra--corregida {
     text-decoration: underline wavy var(--cinta);
     text-decoration-thickness: 0.06em;
     text-decoration-skip-ink: none;
     text-underline-offset: 0.18em;
+  }
+
+  /* Fallo grave: lo escrito tachado y la palabra pedida en recuadro, así que se distingue sin el color */
+  .escrita__palabra--sin-corregir {
+    display: flex;
+    gap: 0.5ch;
+  }
+
+  .escrita__escrito {
+    color: var(--cinta);
+    text-decoration: line-through var(--cinta);
+    text-decoration-thickness: 0.14em;
+  }
+
+  .escrita__pedida {
+    padding-inline: 0.3ch;
+    text-decoration: none;
+    background-color: var(--tinte-cinta);
+    outline: 1px solid var(--cinta);
+    outline-offset: -1px;
   }
 
   /* Con el resultado en la hoja no hay nada que escribir: etiqueta y renglón se ocultan sin cambiar de alto */
@@ -499,6 +520,45 @@
     font-weight: var(--peso-fuerte);
   }
 
+  /* En la columna del detalle, nombres y resúmenes a --paso--1 para que quepan las dos filas, la
+     línea de practicar y el teclado sin desplazamiento */
+  @media (width >= 48rem) {
+    .informe__datos .marcador__etiqueta {
+      font-size: var(--paso--1);
+      white-space: nowrap;
+    }
+
+    .ritmo__resumen,
+    .fallos__resumen,
+    .informe__practicar {
+      font-size: var(--paso--1);
+      line-height: 1.35;
+    }
+
+    .informe__palabra {
+      font-size: var(--paso-0);
+      line-height: 1;
+    }
+  }
+
+  /* La cifra de sin corregir pasa a cinta cuando la vista marca data-cuenta distinto de 0 */
+  .marcador__valor[data-cuenta]:not([data-cuenta="0"]) {
+    color: var(--cinta);
+  }
+
+  .informe__practicar {
+    max-inline-size: var(--medida);
+    font-size: var(--paso--1);
+    color: var(--tinta-suave);
+  }
+
+  .informe__palabra {
+    font-family: var(--fuente-hoja);
+    font-size: var(--paso-0);
+    font-weight: var(--peso-fuerte);
+    color: var(--tinta);
+  }
+
   .fallos__resumen {
     max-inline-size: var(--medida);
   }
@@ -662,8 +722,16 @@
 
     .letra--error,
     .letra--sobrante,
-    .escrita__palabra--fallo {
+    .escrita__palabra--corregida {
       text-decoration-thickness: 0.09em;
+    }
+
+    .escrita__escrito {
+      text-decoration-thickness: 0.2em;
+    }
+
+    .escrita__pedida {
+      outline-width: 2px;
     }
 
     /* nth-child(n) iguala la especificidad de la 2.ª y la 3.ª palabra */
@@ -703,10 +771,22 @@
       background-color: CanvasText;
     }
 
-    .escrita__palabra--fallo {
+    .escrita__palabra--corregida,
+    .escrita__escrito {
       forced-color-adjust: none;
       color: MarkText;
       background-color: Mark;
+    }
+
+    .escrita__escrito {
+      text-decoration-color: MarkText;
+    }
+
+    .escrita__pedida {
+      forced-color-adjust: none;
+      color: CanvasText;
+      background-color: Canvas;
+      outline: 2px solid CanvasText;
     }
 
     .hoja::after {
