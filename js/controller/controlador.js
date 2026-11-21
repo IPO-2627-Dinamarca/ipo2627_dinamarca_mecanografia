@@ -44,7 +44,7 @@ export class Controlador {
   }
 
   #comenzar() {
-    this.#modelo.comenzar(this.#vista.limite);
+    this.#modelo.comenzar(this.#vista.limite, this.#vista.modo);
     this.#vista.mostrarPrueba(this.#modelo.limite);
     this.#vista.mostrarPalabra(this.#modelo.palabra, this.#modelo.siguientes);
     this.#refrescarMarcadores();
@@ -71,7 +71,7 @@ export class Controlador {
     // Los marcadores quedan con el valor final y no con el del último tic.
     this.#refrescarMarcadores();
 
-    const { correctas, milisegundos, precision, fallosPorTecla, aceptadas } = this.#modelo;
+    const { correctas, milisegundos, precision, fallosPorTecla, pasadas, sinCorregir, correcciones } = this.#modelo;
     const ppm = Math.round(this.#modelo.palabrasPorMinuto);
     const record = correctas > 0 && milisegundos >= PPM_DESDE_MS && ppm > this.#mejorMarca;
     if (record) {
@@ -80,7 +80,7 @@ export class Controlador {
     }
     this.#vista.mostrarResultado({
       ppm, correctas, segundos: milisegundos / 1000, precision, mejorMarca: this.#mejorMarca, record,
-      fallos: fallosPorTecla, ritmo: this.#modelo.ritmo(PPM_DESDE_MS), escritas: aceptadas,
+      fallos: fallosPorTecla, ritmo: this.#modelo.ritmo(PPM_DESDE_MS), pasadas, sinCorregir, correcciones,
     });
   }
 
@@ -93,22 +93,29 @@ export class Controlador {
 
   #confirmar(texto) {
     if (texto === '' || this.#terminarSiToca()) return;
-    if (this.#modelo.confirmar(texto)) {
-      this.#acertar();
+    const pedida = this.#modelo.palabra;
+    const estado = this.#modelo.confirmar(texto);
+    if (estado !== null) {
+      this.#pasar(estado, pedida);
       return;
     }
     this.#vista.mostrarProgreso(this.#modelo.letras());
     this.#vista.marcarError(true);
   }
 
-  #acertar() {
+  #pasar(estado, pedida) {
     if (this.#terminarSiToca()) return;
     this.#vista.limpiarCampo();
     this.#vista.marcarError(false);
     this.#vista.mostrarPalabra(this.#modelo.palabra, this.#modelo.siguientes);
     this.#refrescarMarcadores();
-    this.#vista.celebrarAcierto();
-    this.#vista.anunciar(this.#modelo.palabra);
+    if (estado === 'sinCorregir') {
+      this.#vista.avanzarHoja();
+      this.#vista.anunciar(`Sin corregir: ${pedida}. ${this.#modelo.palabra}`);
+    } else {
+      this.#vista.celebrarAcierto();
+      this.#vista.anunciar(this.#modelo.palabra);
+    }
   }
 
   #refrescarMarcadores() {
