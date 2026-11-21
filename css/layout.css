@@ -1,33 +1,70 @@
 @layer layout {
-  /* Una sola columna centrada y anclada arriba */
+  /* El título centrado arriba y debajo la mesa de trabajo, anclada arriba */
   .app {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "cabecera"
-      "principal"
-      "pie";
+      "principal";
     align-content: start;
-    gap: var(--espacio-5);
+    gap: var(--respiro);
     min-block-size: 100dvh;
-    padding-block: var(--espacio-5);
-    padding-inline: max(var(--espacio-3), (100% - var(--ancho-columna)) / 2);
+    padding-block: var(--respiro);
+    padding-inline: var(--espacio-3);
   }
-
-  .cabecera { grid-area: cabecera; }
-  .principal { grid-area: principal; }
-  .pie { grid-area: pie; }
 
   .cabecera {
-    display: grid;
-    gap: var(--espacio-3);
+    grid-area: cabecera;
+    text-align: center;
   }
 
-  /* Contenedor de consulta: el mando se apila cuando la columna es estrecha */
+  .principal { grid-area: principal; }
+  .ajustes { grid-area: ajustes; }
+  .marcadores { grid-area: marcadores; }
+  .prueba { grid-area: prueba; }
+  .informe { grid-area: informe; }
+
+  /* Contenedor de consulta: el mando se apila cuando la columna es estrecha.
+     Móvil: una columna en el orden del DOM. */
   .principal {
     container: principal / inline-size;
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "ajustes"
+      "marcadores"
+      "prueba"
+      "informe";
+    align-items: start;
     gap: var(--espacio-3);
+  }
+
+  /* Tableta: límites en una fila arriba y el detalle a la derecha de la hoja.
+     El detalle va solo en la fila de la prueba para que su alto no desplace la hoja. */
+  @media (width >= 48rem) {
+    .principal {
+      grid-template-columns: minmax(0, 1fr) var(--ancho-detalle);
+      grid-template-areas:
+        "ajustes ajustes"
+        "marcadores ."
+        "prueba informe";
+      column-gap: var(--espacio-4);
+    }
+  }
+
+  /* Escritorio: límites a la izquierda, hoja en el centro y detalle a la derecha, siempre reservado.
+     Con sitio, las dos columnas laterales miden lo mismo y la hoja queda centrada bajo el título. */
+  @media (width >= 64rem) {
+    .principal {
+      grid-template-columns:
+        minmax(var(--ancho-ajustes), var(--ancho-detalle))
+        minmax(30rem, var(--ancho-columna))
+        var(--ancho-detalle);
+      grid-template-areas:
+        ". marcadores ."
+        "ajustes prueba informe";
+      justify-content: center;
+    }
   }
 
   /* Límites: los dos grupos en una fila que se parte si no cabe */
@@ -43,8 +80,10 @@
     align-items: center;
   }
 
+  /* Ancho común para que los botones de los dos grupos empiecen a la misma altura */
   .selector__titulo {
     float: inline-start;
+    min-inline-size: 5.25rem;
     margin-inline-end: var(--espacio-2);
   }
 
@@ -54,8 +93,26 @@
     place-items: center;
   }
 
-  /* Columna estrecha: cada grupo en su línea, con el título encima y los botones a todo el ancho */
-  @container principal (inline-size < 30rem) {
+  /* En la columna lateral: los dos grupos apilados y los botones en filas */
+  @media (width >= 64rem) {
+    .ajustes {
+      display: grid;
+      gap: var(--espacio-4);
+    }
+
+    .selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(3rem, 1fr));
+      gap: var(--espacio-1);
+    }
+
+    .selector__titulo {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* Columna muy estrecha: cada grupo en su línea, con el título encima y los botones a todo el ancho */
+  @container principal (inline-size < 20rem) {
     .selector {
       flex: 1 1 100%;
       flex-wrap: wrap;
@@ -119,14 +176,14 @@
       "controles";
     /* Proporcional al cuerpo: deja sitio al subrayado ondulado de la letra errónea */
     gap: calc(var(--cuerpo-max) * 0.2);
-    --cuerpo-max: 5.5rem;
+    --cuerpo-max: min(5.5rem, 10dvh);
     /* La palabra ocupa el 93 % del ancho útil de la muestra (avance de 0,6 em por letra) */
     --cuerpo: clamp(1.75rem, calc((100cqi - 2 * var(--sangria)) * 1.55 / var(--letras, 8)), var(--cuerpo-max));
   }
 
   @container principal (inline-size < 30rem) {
     .hoja {
-      --cuerpo-max: 4.5rem;
+      --cuerpo-max: min(4.5rem, 7.5dvh);
     }
   }
 
@@ -185,7 +242,9 @@
     .teclado {
       column-gap: 0.125rem;
     }
+  }
 
+  @container principal (inline-size < 20rem) {
     .mando {
       grid-template-columns: 1fr;
       grid-template-areas:
@@ -204,7 +263,19 @@
   .informe {
     display: grid;
     gap: var(--espacio-4);
-    margin-block-start: var(--espacio-5);
+    margin-block-start: var(--espacio-4);
+  }
+
+  /* En su columna, el detalle empieza a la altura de la hoja y las teclas aprovechan el ancho */
+  @media (width >= 48rem) {
+    .informe {
+      gap: var(--espacio-3);
+      margin-block-start: 0;
+    }
+
+    .teclado {
+      column-gap: 0.125rem;
+    }
   }
 
   .fallos {
