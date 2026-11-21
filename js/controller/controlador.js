@@ -25,7 +25,7 @@ export class Controlador {
     this.#vista.alEscribir({
       escribir: (texto) => this.#escribir(texto),
       confirmar: (texto) => this.#confirmar(texto),
-      previsualizar: (texto) => this.#vista.mostrarProgreso(this.#modelo.progreso(texto)),
+      previsualizar: (texto) => this.#vista.mostrarProgreso(this.#modelo.letras(texto)),
     });
     this.#vista.alPulsarAtajo((atajo) => this.#atajo(atajo));
     this.#vista.mostrarListo();
@@ -71,7 +71,7 @@ export class Controlador {
     // Los marcadores quedan con el valor final y no con el del último tic.
     this.#refrescarMarcadores();
 
-    const { correctas, milisegundos, precision, fallosPorTecla } = this.#modelo;
+    const { correctas, milisegundos, precision, fallosPorTecla, aceptadas } = this.#modelo;
     const ppm = Math.round(this.#modelo.palabrasPorMinuto);
     const record = correctas > 0 && milisegundos >= PPM_DESDE_MS && ppm > this.#mejorMarca;
     if (record) {
@@ -80,14 +80,14 @@ export class Controlador {
     }
     this.#vista.mostrarResultado({
       ppm, correctas, segundos: milisegundos / 1000, precision, mejorMarca: this.#mejorMarca, record,
-      fallos: fallosPorTecla,
+      fallos: fallosPorTecla, ritmo: this.#modelo.ritmo(PPM_DESDE_MS), escritas: aceptadas,
     });
   }
 
   #escribir(texto) {
     if (this.#terminarSiToca()) return;
     this.#modelo.escribir(texto);
-    this.#vista.mostrarProgreso(this.#modelo.progreso());
+    this.#vista.mostrarProgreso(this.#modelo.letras());
     this.#vista.marcarError(this.#modelo.hayError);
   }
 
@@ -97,7 +97,7 @@ export class Controlador {
       this.#acertar();
       return;
     }
-    this.#vista.mostrarProgreso(this.#modelo.progreso());
+    this.#vista.mostrarProgreso(this.#modelo.letras());
     this.#vista.marcarError(true);
   }
 
@@ -112,8 +112,9 @@ export class Controlador {
   }
 
   #refrescarMarcadores() {
-    const { correctas, segundos, milisegundos, palabrasPorMinuto } = this.#modelo;
+    const { correctas, segundos, milisegundos, palabrasPorMinuto, activo, progreso } = this.#modelo;
     const ppm = milisegundos >= PPM_DESDE_MS ? palabrasPorMinuto : null;
     this.#vista.mostrarMarcadores({ correctas, segundos, ppm });
+    this.#vista.mostrarAvance(activo ? progreso : null);
   }
 }
