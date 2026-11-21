@@ -9,13 +9,80 @@
   }
 
   .cabecera__lema {
-    max-inline-size: 34ch;
+    max-inline-size: var(--medida);
     text-wrap: pretty;
   }
 
   .pie {
     font-size: var(--paso--1);
     color: var(--tinta-suave);
+  }
+
+  /* Límites: botones de tinta como el de Iniciar; el elegido va relleno */
+
+  .ajustes,
+  .selector {
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .selector__titulo {
+    padding: 0;
+    color: var(--tinta-suave);
+  }
+
+  .selector__opcion {
+    min-block-size: 2.75rem;
+    min-inline-size: 2.75rem;
+    padding-inline: var(--espacio-2);
+    font-weight: var(--peso-medio);
+    font-variant-numeric: tabular-nums;
+    border: 2px solid var(--tinta);
+    border-radius: var(--radio);
+    cursor: pointer;
+
+    & + & {
+      margin-inline-start: -2px;
+    }
+
+    & input {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      margin: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &:has(:checked) {
+      color: var(--papel);
+      background-color: var(--tinta);
+    }
+
+    &:has(:focus-visible) {
+      z-index: 1;
+      outline: var(--anillo) solid var(--tinta);
+      outline-offset: 2px;
+    }
+
+    .ajustes:disabled & {
+      color: var(--tinta-suave);
+      border-color: var(--borde);
+      cursor: not-allowed;
+
+      &:has(:checked) {
+        color: var(--papel);
+        background-color: var(--borde);
+      }
+    }
+  }
+
+  @media (hover: hover) {
+    .ajustes:enabled .selector__opcion:not(:has(:checked)):hover {
+      background-color: var(--renglon);
+    }
   }
 
   /* Marcadores: cifra y nombre sobre la mesa, sin cajas (semejanza con el detalle) */
@@ -25,6 +92,14 @@
 
     & abbr {
       text-decoration: none;
+    }
+  }
+
+  .marcador__tope {
+    color: var(--tinta-suave);
+
+    &:empty {
+      display: none;
     }
   }
 
@@ -93,6 +168,34 @@
     .app[data-estado="error"] & {
       display: none;
     }
+  }
+
+  /* Las siguientes, en la misma letra y cada vez más pequeñas: la hoja que va saliendo */
+  .cola {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    .app:not([data-estado="activo"]) & {
+      visibility: hidden;
+    }
+
+    .app[data-estado="error"] & {
+      display: none;
+    }
+  }
+
+  .cola__palabra {
+    --_cuerpo: var(--paso-3);
+
+    padding-inline: var(--sangria);
+    font: var(--peso-fuerte) min(var(--_cuerpo), calc((100cqi - 2 * var(--sangria)) * 1.55 / 12)) / 1.2 var(--fuente-hoja);
+    white-space: nowrap;
+    overflow-x: clip;
+    color: var(--guia);
+
+    &:nth-child(2) { --_cuerpo: var(--paso-2); }
+    &:nth-child(3) { --_cuerpo: var(--paso-1); }
   }
 
   .letra--pendiente {
@@ -333,30 +436,6 @@
     }
   }
 
-  /* Lámina: la máquina en escala de grises, sin marco ni nada encima */
-
-  .lamina__foto {
-    display: block;
-    inline-size: 100%;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    object-position: 50% 30%;
-    filter: grayscale(1);
-  }
-
-  @media (width >= 60rem) {
-    .lamina__foto {
-      aspect-ratio: auto;
-    }
-  }
-
-  .lamina__credito {
-    max-inline-size: 48ch;
-    margin-block-start: var(--espacio-2);
-    font-size: var(--paso--1);
-    color: var(--tinta-suave);
-  }
-
   /* Con el teclado virtual abierto la ventana encoge (interactive-widget=resizes-content);
      durante la prueba se retira lo accesorio para que palabra y campo sigan a la vista. */
   @media (height < 34rem) {
@@ -364,10 +443,15 @@
       padding-block: var(--espacio-2);
 
       & .cabecera,
-      & .lamina,
+      & .ajustes,
       & .pie,
-      & .ayuda {
+      & .ayuda,
+      & .cola__palabra:nth-child(n + 2) {
         display: none;
+      }
+
+      & .cola {
+        block-size: auto;
       }
 
       & .principal {
@@ -398,6 +482,23 @@
 
     @keyframes golpe {
       from { transform: translateY(-0.15em); }
+    }
+
+    /* Al acertar, la palabra y la cola suben desde la línea de abajo y entra una nueva al final */
+    .hoja--avanza :is(.muestra, .cola__palabra) {
+      animation: avanza var(--avance) var(--curva);
+    }
+
+    .hoja--avanza .cola__palabra:last-child {
+      animation-name: entra;
+    }
+
+    @keyframes avanza {
+      from { translate: 0 0.6em; opacity: 0.4; }
+    }
+
+    @keyframes entra {
+      from { translate: 0 0.6em; opacity: 0; }
     }
 
     /* Resultado y detalle entran desde @starting-style porque pasan de display: none a visibles */
@@ -510,6 +611,17 @@
 
     .tecla__cuenta {
       display: block;
+    }
+
+    .selector__opcion:has(:checked) {
+      forced-color-adjust: none;
+      color: HighlightText;
+      background-color: Highlight;
+    }
+
+    .ajustes:disabled .selector__opcion:has(:checked) {
+      color: Canvas;
+      background-color: GrayText;
     }
   }
 }
