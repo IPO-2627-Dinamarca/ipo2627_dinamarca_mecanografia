@@ -23,6 +23,10 @@ export class Modelo {
   #activo = false;
   #limite = SIN_LIMITE;
   #fallosPorTecla = new Map();
+  // Registro de la prueba, en ms desde el inicio: cada palabra aceptada y cada fallo.
+  #aceptadas = [];
+  #instantesFallo = [];
+  #palabraConFallo = false;
 
   /** @param {string[]} palabras sin repetidas */
   constructor(palabras) {
@@ -46,6 +50,11 @@ export class Modelo {
   /** Copia de los fallos de la prueba por tecla: Map<tecla, número>. */
   get fallosPorTecla() { return new Map(this.#fallosPorTecla); }
 
+  /** Palabras aceptadas en orden, con si tuvieron algún fallo: [{texto, conFallos}]. */
+  get aceptadas() {
+    return this.#aceptadas.map(({ texto, conFallos }) => ({ texto, conFallos }));
+  }
+
   /** Tiempo de la prueba en curso o de la última, medido con el reloj del navegador. */
   get milisegundos() {
     return (this.#activo ? performance.now() : this.#fin) - this.#inicio;
@@ -65,6 +74,15 @@ export class Modelo {
     return this.#pulsaciones > 0 ? (this.#pulsaciones - this.#fallos) / this.#pulsaciones : null;
   }
 
+  /** Avance hacia el límite (0–1): el más cercano de los que haya; null sin límite. */
+  get progreso() {
+    const { segundos, palabras } = this.#limite;
+    const fracciones = [];
+    if (segundos !== null) fracciones.push(this.milisegundos / (segundos * 1000));
+    if (palabras !== null) fracciones.push(this.#correctas / palabras);
+    return fracciones.length === 0 ? null : Math.min(1, Math.max(...fracciones));
+  }
+
   /** true si lo escrito ya no es el principio de la palabra. */
   get hayError() {
     return !this.#palabra.startsWith(this.#intento);
@@ -81,7 +99,7 @@ export class Modelo {
    * Estado de cada letra (ok, error o pendiente) y de lo que sobra al final (sobrante).
    * Sin argumento usa lo último registrado; con texto no altera el estado.
    */
-  progreso(texto = this.#intento) {
+  letras(texto = this.#intento) {
     const intento = Modelo.#normalizar(texto);
     const letras = [...this.#palabra].map((letra, i) => ({
       letra,
@@ -93,6 +111,20 @@ export class Modelo {
     return letras.concat(sobrantes);
   }
 
+  /**
+   * PPM media acumulada, un punto por segundo desde desdeMs; el último, en el instante final,
+   * coincide con palabrasPorMinuto. Los tiempos van en segundos.
+   * @returns {{puntos: {s: number, ppm: number}[], fallos: number[], duracion: number}}
+   */
+  ritmo(desdeMs) {
+    const total = this.milisegundos;
+    const ppmEn = (ms) => (this.#aceptadas.filter((p) => p.ms <= ms).length * 60_000) / ms;
+    const puntos = [];
+    for (let ms = desdeMs; ms < total; ms += 1000) puntos.push({ s: ms / 1000, ppm: ppmEn(ms) });
+    if (total >= desdeMs) puntos.push({ s: total / 1000, ppm: this.palabrasPorMinuto });
+    return { puntos, fallos: this.#instantesFallo.map((ms) => ms / 1000), duracion: total / 1000 };
+  }
+
   /** @param {{segundos: number|null, palabras: number|null}} limite */
   comenzar(limite = SIN_LIMITE) {
     this.#limite = { ...limite };
@@ -100,6 +132,8 @@ export class Modelo {
     this.#pulsaciones = 0;
     this.#fallos = 0;
     this.#fallosPorTecla.clear();
+    this.#aceptadas = [];
+    this.#instantesFallo = [];
     this.#cola = Array.from({ length: EN_COLA }, () => this.#sortear());
     this.#inicio = performance.now();
     this.#activo = true;
@@ -125,10 +159,7 @@ export class Modelo {
     const intento = Modelo.#normalizar(texto);
     for (let i = this.#intento.length; i < intento.length; i++) {
       this.#pulsaciones++;
-      if (intento[i] !== this.#palabra[i]) {
-        this.#fallos++;
-        this.#anotarFallo(this.#palabra[i], intento[i]);
-      }
+      if (intento[i] !== this.#palabra[i]) this.#fallar(this.#palabra[i], intento[i]);
     }
     this.#intento = intento;
   }
@@ -145,15 +176,22 @@ export class Modelo {
     if (this.#intento === this.#palabra) {
       this.#pulsaciones++; // el espacio también es una pulsación
       this.#correctas++;
+      this.#aceptadas.push({ texto: this.#palabra, conFallos: this.#palabraConFallo, ms: this.milisegundos });
       this.#avanzar();
       return true;
     }
     if (!this.hayError) {
       this.#pulsaciones++;
-      this.#fallos++;
-      this.#anotarFallo(this.#palabra[this.#intento.length]); // la letra que faltaba
+      this.#fallar(this.#palabra[this.#intento.length]); // la letra que faltaba
     }
     return false;
+  }
+
+  #fallar(esperada, escrita) {
+    this.#fallos++;
+    this.#palabraConFallo = true;
+    this.#instantesFallo.push(this.milisegundos);
+    this.#anotarFallo(esperada, escrita);
   }
 
   #anotarFallo(esperada, escrita) {
@@ -180,6 +218,7 @@ export class Modelo {
     this.#palabra = primera;
     this.#cola = [...resto, this.#sortear()];
     this.#intento = '';
+    this.#palabraConFallo = false;
   }
 
   // Se sortea entre las demás para no repetir la última de la cola sin tener que reintentar.
