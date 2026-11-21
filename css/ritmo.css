@@ -1,0 +1,89 @@
+/* Gráfica de ritmo del detalle: una sola serie en tinta y los fallos como marcas de cinta bajo el eje */
+@layer componentes {
+  .ritmo {
+    display: grid;
+    gap: var(--espacio-2);
+  }
+
+  /* El viewBox es de 288 × 112: a 18rem de ancho mide 7rem de alto y el texto queda a su tamaño */
+  .ritmo__grafica {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    overflow: visible;
+  }
+
+  .ritmo__resumen {
+    max-inline-size: var(--medida);
+  }
+
+  .ritmo__rejilla,
+  .ritmo__eje,
+  .ritmo__linea,
+  .ritmo__fallos {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .ritmo__rejilla {
+    stroke: color-mix(in srgb, var(--borde) 40%, transparent);
+    stroke-width: 1px;
+  }
+
+  .ritmo__eje {
+    stroke: var(--borde);
+    stroke-width: 1px;
+  }
+
+  .ritmo__linea {
+    stroke: var(--tinta);
+    stroke-width: 2px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .ritmo__punto {
+    fill: var(--tinta);
+  }
+
+  .ritmo__fallos {
+    stroke: var(--cinta);
+    stroke-width: 1.5px;
+  }
+
+  .ritmo__texto {
+    fill: var(--tinta-suave);
+    font-family: var(--fuente-interfaz);
+    font-size: var(--paso--1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ritmo__texto--final {
+    font-weight: var(--peso-medio);
+  }
+
+  @media (forced-colors: active) {
+    .ritmo__grafica {
+      forced-color-adjust: none;
+    }
+
+    .ritmo__linea {
+      stroke: CanvasText;
+    }
+
+    .ritmo__punto,
+    .ritmo__texto {
+      fill: CanvasText;
+    }
+
+    .ritmo__rejilla,
+    .ritmo__eje {
+      stroke: GrayText;
+    }
+
+    .ritmo__fallos {
+      stroke: Mark;
+      stroke-width: 3px;
+    }
+  }
+}
