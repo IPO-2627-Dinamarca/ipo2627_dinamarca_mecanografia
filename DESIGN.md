@@ -152,6 +152,34 @@ ninguno). El campo y el botón están en la misma posición y con el mismo tama�
 | 1024 × 768 | 732 | 732 | 732 |
 | 390 × 844 | 823 | 823 | 1165 (detalle debajo) |
 | 320 × 568 | 845 | 507 (compacto) | 1194 |
+
+### Revisión del 2026-11-22 (4): modo libre y correcciones
+
+Pedido por el usuario: poder pasar de palabra aunque esté mal, para ver qué se falla, qué se corrige y cuánto se
+tarda en corregir; lo que no se corrige es el fallo grave que hay que practicar.
+
+- Modo: tercer grupo de la columna de límites, «Modo», con Libre (por defecto) y Estricto, misma tira que los
+  otros (`input[name="modo"]`). La nota suma una frase: «Libre: Espacio pasa siempre; lo que no corrijas cuenta como
+  fallo grave.» Estricto conserva el comportamiento que pide el enunciado al pie de la letra.
+- Reglas (en el modelo): un error empieza cuando lo escrito deja de ser principio de la palabra y se corrige cuando
+  vuelve a serlo; se guarda esa duración. En Libre, pasar una palabra mal o incompleta la deja `sinCorregir`, no
+  suma a correctas y cada letra que faltaba cuenta como pulsación fallada en su tecla. Las PPM, la gráfica y la mejor
+  marca solo cuentan palabras bien escritas.
+- Detalle: segunda fila con la misma maqueta que la primera: «corregidos», «por corrección» (media con una décima)
+  y «sin corregir», cuya cifra pasa a `--cinta` si es mayor que 0 (`[data-cuenta]:not([data-cuenta="0"])`).
+  Debajo de la gráfica, `p.informe__practicar` con las palabras sin corregir en la fuente de la hoja. Para que todo
+  quepa en 18rem, los nombres de los datos, los resúmenes y esa línea bajan a `--paso--1` en escritorio.
+- Hoja escrita en tres niveles: bien (tinta), `--corregida` (el subrayado ondulado de antes, que sustituye a
+  `--fallo`) y `--sin-corregir`, con `<del class="escrita__escrito">` tachado grueso en `--cinta` y
+  `<ins class="escrita__pedida">` en tinta sobre `--tinte-cinta` con recuadro fino (5,95:1 y 14,86:1 en claro;
+  5,21:1 y 12,75:1 en oscuro). La diferencia no depende del color: tachado y recuadro frente a subrayado.
+- Gráfica: `path.ritmo__sin-corregir`, marcas de 14 unidades del `viewBox` y trazo de 4px en `--cinta` (5px en
+  `Mark` con `forced-colors`), frente a las de 6 unidades de cada pulsación fallada.
+- Móvil: con tres grupos de límites, a 390 × 844 el cuerpo máximo de la palabra en columna estrecha baja a `7dvh` y
+  se recogen los huecos para que inicio y prueba sigan cabiendo.
+- Ventanas bajas (escritorio con menos de 45rem de alto): el detalle y el teclado de fallos juntan sus piezas a
+  `--espacio-1`. Con el peor resultado (dos filas de datos, pie de la gráfica y «Para practicar» en tres líneas cada
+  uno) el detalle se salía 12px a 1366 × 657; así cabe (657 / 657), y también a 1366 × 768 y 1024 × 768.
 ---
 
 ## 1. Concepto
