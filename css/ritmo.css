@@ -20,7 +20,8 @@
   .ritmo__rejilla,
   .ritmo__eje,
   .ritmo__linea,
-  .ritmo__fallos {
+  .ritmo__fallos,
+  .ritmo__sin-corregir {
     fill: none;
     vector-effect: non-scaling-stroke;
   }
@@ -49,6 +50,12 @@
   .ritmo__fallos {
     stroke: var(--cinta);
     stroke-width: 1.5px;
+  }
+
+  /* Fallo grave: más grueso que el fallo corregido; la vista las dibuja también más altas */
+  .ritmo__sin-corregir {
+    stroke: var(--cinta);
+    stroke-width: 4px;
   }
 
   .ritmo__texto {
@@ -84,6 +91,11 @@
     .ritmo__fallos {
       stroke: Mark;
       stroke-width: 3px;
+    }
+
+    .ritmo__sin-corregir {
+      stroke: Mark;
+      stroke-width: 5px;
     }
   }
 }
