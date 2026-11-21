@@ -67,11 +67,17 @@
     }
   }
 
-  /* Límites: los dos grupos en una fila que se parte si no cabe */
+  /* Límites: los dos grupos en una fila que se parte si no cabe y la nota debajo.
+     Es contenedor propio: su ancho decide si cada grupo lleva el título delante o encima. */
   .ajustes {
+    container: ajustes / inline-size;
     display: flex;
     flex-wrap: wrap;
     gap: var(--espacio-2) var(--espacio-5);
+  }
+
+  .ajustes__nota {
+    flex-basis: 100%;
   }
 
   /* Con float la leyenda deja de ir en el borde y se coloca como un elemento más de la fila */
@@ -93,26 +99,17 @@
     place-items: center;
   }
 
-  /* En la columna lateral: los dos grupos apilados y los botones en filas */
+  /* En la columna lateral: los dos grupos apilados */
   @media (width >= 64rem) {
     .ajustes {
       display: grid;
       gap: var(--espacio-4);
     }
-
-    .selector {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(3rem, 1fr));
-      gap: var(--espacio-1);
-    }
-
-    .selector__titulo {
-      grid-column: 1 / -1;
-    }
   }
 
-  /* Columna muy estrecha: cada grupo en su línea, con el título encima y los botones a todo el ancho */
-  @container principal (inline-size < 20rem) {
+  /* Columna estrecha (la lateral del escritorio o el móvil): cada grupo en su línea, con el título encima
+     y los botones en una tira a todo el ancho */
+  @container ajustes (inline-size < 20rem) {
     .selector {
       flex: 1 1 100%;
       flex-wrap: wrap;
@@ -128,12 +125,28 @@
     }
   }
 
-  .marcadores,
-  .informe__datos {
+  .marcadores {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: var(--espacio-2) var(--espacio-5);
+  }
+
+  /* Con la columna central en su mínimo no caben los tres con topes de tres cifras: las ppm van siempre
+     en su propia línea, para que la fila no se parta a mitad de prueba y empuje la hoja */
+  @media (64rem <= width < 80rem) {
+    .marcador--ritmo {
+      flex-basis: 100%;
+      justify-content: end;
+    }
+  }
+
+  /* Detalle: los tres datos en una fila, con la cifra encima del nombre; cada columna mide lo que su dato */
+  .informe__datos {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    justify-content: space-between;
+    gap: var(--espacio-3);
   }
 
   .marcador {
@@ -146,6 +159,12 @@
   .marcador__valor,
   .marcador__tope {
     order: -1;
+  }
+
+  .informe__datos .marcador {
+    flex-direction: column;
+    align-items: start;
+    gap: 0;
   }
 
   .marcador--ritmo {
@@ -177,8 +196,8 @@
     /* Proporcional al cuerpo: deja sitio al subrayado ondulado de la letra errónea */
     gap: calc(var(--cuerpo-max) * 0.2);
     --cuerpo-max: min(5.5rem, 10dvh);
-    /* La palabra ocupa el 93 % del ancho útil de la muestra (avance de 0,6 em por letra) */
-    --cuerpo: clamp(1.75rem, calc((100cqi - 2 * var(--sangria)) * 1.55 / var(--letras, 8)), var(--cuerpo-max));
+    /* La palabra y el cursor tras ella ocupan el 93 % del ancho útil de la muestra (avance de 0,6 em por letra) */
+    --cuerpo: clamp(1.75rem, calc((100cqi - 2 * var(--sangria)) * 1.55 / (var(--letras, 8) + 1)), var(--cuerpo-max));
   }
 
   @container principal (inline-size < 30rem) {
@@ -200,6 +219,11 @@
     block-size: calc(var(--cuerpo-max) * 1.15);
   }
 
+  /* Referencia del cursor, que se coloca desde la sangría */
+  .muestra {
+    position: relative;
+  }
+
   .aviso {
     min-block-size: calc(var(--cuerpo-max) * 1.15);
   }
@@ -210,6 +234,18 @@
     display: grid;
     align-content: start;
     block-size: calc((var(--paso-3) + var(--paso-2) + var(--paso-1)) * 1.2);
+  }
+
+  /* En el resultado, la hoja escrita ocupa el hueco de la cola y del campo. Con contain: size no aporta
+     alto a esas filas: la hoja mide lo mismo que en la prueba y lo que no cabe se recorta. */
+  .escrita {
+    grid-row: cola-start / controles-end;
+    grid-column: 1;
+    contain: size;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: start;
+    gap: 0 1ch;
   }
 
   /* La unidad puede partirse; su última línea se apoya en la línea base de la cifra */
@@ -269,7 +305,7 @@
   /* En su columna, el detalle empieza a la altura de la hoja y las teclas aprovechan el ancho */
   @media (width >= 48rem) {
     .informe {
-      gap: var(--espacio-3);
+      gap: var(--espacio-2);
       margin-block-start: 0;
     }
 
