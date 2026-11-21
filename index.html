@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/ritmo.css">
 
   <script type="module" src="js/main.js"></script>
 </head>
@@ -35,8 +36,8 @@
     </header>
 
     <main class="principal">
-      <fieldset class="ajustes" data-vista="ajustes" disabled>
-        <legend class="visualmente-oculto">Límites de la prueba</legend>
+      <fieldset class="ajustes" data-vista="ajustes" aria-describedby="ajustes-nota" disabled>
+        <legend class="ajustes__titulo">Límites de la prueba</legend>
         <fieldset class="selector">
           <legend class="selector__titulo">Segundos</legend>
           <label class="selector__opcion"><input type="radio" name="segundos" value=""><span aria-hidden="true">∞</span><span class="visualmente-oculto">sin límite</span></label>
@@ -53,6 +54,7 @@
           <label class="selector__opcion"><input type="radio" name="palabras" value="50">50</label>
           <label class="selector__opcion"><input type="radio" name="palabras" value="100">100</label>
         </fieldset>
+        <p class="ajustes__nota" id="ajustes-nota">La prueba acaba con el primero que se cumpla.</p>
       </fieldset>
 
       <h2 class="visualmente-oculto">Marcadores</h2>
@@ -101,6 +103,8 @@
                    aria-invalid="false" disabled>
             <p class="controles__error" id="error">Palabra incompleta o con errores.</p>
           </div>
+
+          <ol class="escrita" data-vista="escrita" aria-hidden="true" hidden></ol>
         </div>
 
         <div class="mando">
@@ -129,6 +133,11 @@
           </div>
         </dl>
         <p class="informe__record" data-vista="resultado-record" hidden>Nueva mejor marca.</p>
+
+        <figure class="ritmo">
+          <svg class="ritmo__grafica" data-vista="ritmo" viewBox="0 0 288 112" aria-hidden="true" focusable="false"></svg>
+          <figcaption class="ritmo__resumen" data-vista="ritmo-resumen"></figcaption>
+        </figure>
 
         <figure class="fallos">
           <figcaption class="fallos__resumen" data-vista="fallos-resumen"></figcaption>
