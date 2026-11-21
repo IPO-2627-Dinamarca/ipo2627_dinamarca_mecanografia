@@ -202,7 +202,18 @@
 
   @container principal (inline-size < 30rem) {
     .hoja {
-      --cuerpo-max: min(4.5rem, 7.5dvh);
+      --cuerpo-max: min(4.5rem, 7dvh);
+    }
+  }
+
+  /* Móvil: con tres grupos de límites, los huecos se recogen para que inicio y prueba quepan a 390 × 844 */
+  @media (width < 48rem) {
+    .principal {
+      gap: var(--espacio-2);
+    }
+
+    .ajustes {
+      row-gap: var(--espacio-1);
     }
   }
 
@@ -311,6 +322,22 @@
 
     .teclado {
       column-gap: 0.125rem;
+    }
+
+    .informe__datos {
+      gap: var(--espacio-2);
+    }
+
+    .fallos {
+      gap: var(--espacio-2);
+    }
+  }
+
+  /* Ventanas bajas: el detalle completo (dos filas, gráfica con su pie, practicar y teclado) junta sus piezas */
+  @media (width >= 64rem) and (height < 45rem) {
+    .informe,
+    .fallos {
+      gap: var(--espacio-1);
     }
   }
 
