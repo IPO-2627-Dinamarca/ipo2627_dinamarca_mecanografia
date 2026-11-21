@@ -4,6 +4,44 @@ Dirección de arte de la práctica de Mecanografía (IPO 2026/27, grupo Dinamarc
 estilo por defecto; por encima de él solo está el enunciado del profesor (`Mecanografía/README.md`). Todo lo que
 aquí se pide es implementable con HTML, CSS y JS nativos, sin librerías, sin CDN y sin fuentes descargadas.
 
+## 0. Revisión del 2026-11-21: ritmo continuo
+
+Cambios pedidos después del rediseño. Donde chocan con las secciones de abajo, mandan estos; el resto del
+documento sigue vigente.
+
+- **Sin foto.** Se retiran la lámina, la foto de la M40 y su crédito (secciones 4.1, 4.2, 5.9 y 6, y las filas
+  de la lámina en 8 y 9). La página es una sola columna de 44rem como máximo, centrada y anclada arriba, en todos
+  los anchos: cabecera, límites, marcadores, hoja, mando, detalle y pie. Desaparecen la rejilla de dos columnas de
+  la sección 3.3 y los tokens `--espacio-6` y `--ancho-maximo`. El lema pasa de 34ch a `--medida` para ocupar
+  dos líneas y no cuatro.
+- **Espacio entre palabras.** Una palabra completa ya no se acepta sola: hay que pulsar Espacio (o Intro), como
+  en un texto. Si está incompleta o tiene errores, se marca igual que antes y no avanza. El Espacio que cierra una
+  palabra correcta cuenta como pulsación acertada.
+- **Cola de palabras.** Debajo de la palabra en curso, en la celda nueva `cola` de la hoja (áreas
+  `linea / cola / controles`), van las tres siguientes en una `<ol class="cola">`, en la fuente de la hoja, color
+  `--guia` y tamaños `--paso-3`, `--paso-2` y `--paso-1` (limitados para que 12 letras quepan a 320 px). La cola
+  tiene alto fijo y se oculta con `visibility` fuera de la prueba, así que el campo sigue sin moverse. Al acertar,
+  la palabra y la cola suben 0,6em desde abajo y la nueva entra con un fundido (`--avance: 160ms`, solo con
+  `prefers-reduced-motion: no-preference`). En modo compacto solo queda la primera de la cola. Esto relaja la
+  regla de la sección 1.3: las letras siguen sin moverse mientras se escribe, pero la hoja sube una línea en
+  cada acierto, como el papel en el rodillo.
+- **Mayúsculas.** Una de cada cinco palabras sale con la inicial en mayúscula y ahora se exigen las mayúsculas.
+  Los fallos de solo mayúscula (en un sentido o en el otro) se apuntan a una tecla nueva, `⇧`, que abre la
+  tercera fila del teclado de fallos (`'⇧zxcvbnm'`, 29 teclas). Ocupa las medias columnas 1 y 2, de modo que la Z
+  sigue en la 3 y ya no hace falta colocar a mano el primer elemento de esa fila. En el resumen se llama
+  "mayúsculas".
+- **Límites.** Encima de los marcadores va `<fieldset class="ajustes">` con dos grupos de radios dentro de
+  `<label>`: Segundos (∞, 15, 30, 60, 120; 60 por defecto) y Palabras (∞, 10, 25, 50, 100; ∞ por defecto). Se
+  dibujan como el botón de tinta (borde de 2px, el elegido relleno de `--tinta`, foco con `:has(:focus-visible)`,
+  deshabilitados con borde `--borde` durante la prueba) y en `forced-colors` el elegido toma `Highlight`. Por
+  debajo de 30rem cada grupo ocupa su línea con los botones repartidos a todo el ancho. La prueba acaba con el
+  primer límite que se cumpla; si es el de tiempo, dura exactamente ese tiempo. Los marcadores muestran el tope en
+  un `dd` aparte, en `--tinta-suave`: "12 de 25 correctas".
+- **Almacén.** `palabras.json` pasa de 100 palabras a 50 436, sacadas del diccionario de LibreOffice (de 2 a 12
+  letras, sin nombres propios ni siglas). Al haber palabras de hasta 12 letras, el cuerpo de la hoja sigue
+  saliendo de `--letras`, que ahora puede llegar a 12, y su mínimo baja de 2rem a 1,75rem para que una palabra de 12
+  letras quepa entera a 320 px.
+
 ---
 
 ## 1. Concepto
