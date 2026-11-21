@@ -42,6 +42,53 @@ documento sigue vigente.
   saliendo de `--letras`, que ahora puede llegar a 12, y su mínimo baja de 2rem a 1,75rem para que una palabra de 12
   letras quepa entera a 320 px.
 
+### Revisión del 2026-11-21 (2): pantalla única
+
+En un ordenador todo tiene que verse sin desplazarse, en los tres estados (inicio, prueba con error y resultado
+con el teclado de fallos). Esto sustituye la columna única de 44rem del punto «Sin foto» de arriba.
+
+- Cabecera: solo el título, centrado. Se quitan el lema (`.cabecera__lema`) y el pie (`.pie`) con sus reglas. El
+  título crece a `min(clamp(var(--paso-4), 1.25rem + 3.5vw, 4.5rem), 10dvh)` y el token `--paso-5`, que solo
+  usaba el título, desaparece.
+- Rejilla de `.principal` en escritorio (desde 64rem): columnas
+  `minmax(var(--ancho-ajustes), var(--ancho-detalle)) minmax(30rem, var(--ancho-columna)) var(--ancho-detalle)`,
+  con los tokens nuevos `--ancho-ajustes: 11rem` y `--ancho-detalle: 18rem`, y áreas
+  `". marcadores ." / "ajustes prueba informe"`. Con sitio las dos laterales miden 18rem y la hoja queda centrada
+  bajo el título. Los límites se apilan en su columna y sus botones van en una rejilla
+  `repeat(auto-fit, minmax(3rem, 1fr))` con hueco de `--espacio-1` (sin el solape de 2px de la fila).
+- Detalle: `section.informe` sale de `.prueba` y pasa a ser hermana en la rejilla, después de ella, con título
+  `h2`. Su columna está reservada siempre y el detalle ocupa solo la fila de la hoja, así que su alto no puede
+  empujar la hoja ni el botón (`align-items: start` en `.principal`). Las teclas del teclado de fallos se juntan
+  a 0,125rem en horizontal para ganar tamaño en 18rem.
+- Tableta (48 a 64rem): límites en una fila arriba, marcadores, y la hoja con el detalle a su derecha.
+- Móvil (menos de 48rem): una columna en el orden del DOM. A 390px el nombre de cada grupo de límites va delante
+  de sus botones (ancho común de 5,25rem para alinearlos) y la ayuda va junto al botón; ambas cosas se apilan
+  solo por debajo de 20rem. El margen lateral de la hoja baja a 1rem por debajo de 30rem. El detalle queda debajo
+  del botón: a esa anchura no hay otro sitio.
+- Topes por alto: `--respiro: min(var(--espacio-5), 4dvh)` para el margen exterior, el hueco bajo el título y el
+  margen superior de la hoja; `--cuerpo-max: min(5.5rem, 10dvh)` (y `min(4.5rem, 7.5dvh)` en columna estrecha),
+  del que dependen el alto de la celda de la palabra, el del campo y los huecos de la hoja.
+- El modo compacto (`height < 34rem`, prueba en marcha) sigue igual, sin la regla del pie.
+
+Medidas con Chromium: alto que ocupa el contenido / alto de la ventana. `scrollHeight` coincide con la ventana
+en todos los casos de escritorio y no hay desplazamiento horizontal en ninguno. El campo y el botón están en la
+misma posición en los tres estados en todos los tamaños.
+
+| Ventana | Inicio | Prueba con error | Resultado |
+|---|---|---|---|
+| 1920 × 1080 | 790 / 1080 | 790 / 1080 | 790 / 1080 |
+| 1440 × 900 | 760 / 900 | 760 / 900 | 760 / 900 |
+| 1366 × 768 | 704 / 768 | 704 / 768 | 704 / 768 |
+| 1366 × 657 (portátil con barras del navegador) | 652 / 657 | 652 / 657 | 652 / 657 |
+| 1280 × 720 | 680 / 720 | 680 / 720 | 680 / 720 |
+| 1024 × 768 | 692 / 768 | 692 / 768 | 692 / 768 |
+| 800 × 1000 | 797 / 1000 | 797 / 1000 | 797 / 1000 |
+| 390 × 844 | 810 / 844 | 810 / 844 | 1126 / 844 (detalle debajo) |
+| 320 × 568 | 835 / 568 | 835 / 568 | 1174 / 568 |
+
+Antes de este cambio, a 1366 × 768 la página medía 1001px al empezar y 1358px con el resultado. A 320 × 568 no
+cabe: la hoja y el botón ya ocupan más que la ventana, y al escribir el navegador desplaza la página hasta el
+campo.
 ---
 
 ## 1. Concepto
