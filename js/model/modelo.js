@@ -1,12 +1,19 @@
 // Vocal acentuada y su vocal base. La tilde y la diéresis se escriben con la tecla ´ (¨ con mayúsculas).
 const BASE_ACENTUADA = { á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ü: 'u' };
+// Tecla a la que se apuntan los fallos de mayúscula, tanto si falta como si sobra.
+const TECLA_MAYUS = '⇧';
+// Una de cada cinco palabras sale con la inicial en mayúscula.
+const PROBABILIDAD_MAYUSCULA = 0.2;
+// Palabras que se ven por adelantado debajo de la que se está escribiendo.
+const EN_COLA = 3;
+const SIN_LIMITE = Object.freeze({ segundos: null, palabras: null });
 
 /** Estado de una prueba: palabra en curso, aciertos, pulsaciones y tiempo transcurrido. */
 export class Modelo {
   #palabras;
-  #indice = -1;
+  #indiceUltima = -1;
   #palabra = '';
-  #objetivo = '';
+  #cola = [];
   #intento = '';
   #correctas = 0;
   #pulsaciones = 0;
@@ -14,6 +21,7 @@ export class Modelo {
   #inicio = 0;
   #fin = 0;
   #activo = false;
+  #limite = SIN_LIMITE;
   #fallosPorTecla = new Map();
 
   /** @param {string[]} palabras sin repetidas */
@@ -28,6 +36,12 @@ export class Modelo {
   get activo() { return this.#activo; }
   get palabra() { return this.#palabra; }
   get correctas() { return this.#correctas; }
+
+  /** Las próximas palabras, en orden. */
+  get siguientes() { return [...this.#cola]; }
+
+  /** Límites de la prueba en curso o de la última; null es sin límite. */
+  get limite() { return { ...this.#limite }; }
 
   /** Copia de los fallos de la prueba por tecla: Map<tecla, número>. */
   get fallosPorTecla() { return new Map(this.#fallosPorTecla); }
@@ -53,7 +67,14 @@ export class Modelo {
 
   /** true si lo escrito ya no es el principio de la palabra. */
   get hayError() {
-    return !this.#objetivo.startsWith(this.#intento);
+    return !this.#palabra.startsWith(this.#intento);
+  }
+
+  /** true en cuanto se cumple cualquiera de los dos límites. */
+  get limiteAlcanzado() {
+    const { segundos, palabras } = this.#limite;
+    return (palabras !== null && this.#correctas >= palabras)
+      || (segundos !== null && this.milisegundos >= segundos * 1000);
   }
 
   /**
@@ -65,26 +86,32 @@ export class Modelo {
     const letras = [...this.#palabra].map((letra, i) => ({
       letra,
       estado: i >= intento.length ? 'pendiente'
-        : intento[i] === this.#objetivo[i] ? 'ok' : 'error',
+        : intento[i] === this.#palabra[i] ? 'ok' : 'error',
     }));
-    const sobrantes = [...intento.slice(this.#objetivo.length)]
+    const sobrantes = [...intento.slice(this.#palabra.length)]
       .map((letra) => ({ letra, estado: 'sobrante' }));
     return letras.concat(sobrantes);
   }
 
-  comenzar() {
+  /** @param {{segundos: number|null, palabras: number|null}} limite */
+  comenzar(limite = SIN_LIMITE) {
+    this.#limite = { ...limite };
     this.#correctas = 0;
     this.#pulsaciones = 0;
     this.#fallos = 0;
     this.#fallosPorTecla.clear();
+    this.#cola = Array.from({ length: EN_COLA }, () => this.#sortear());
     this.#inicio = performance.now();
     this.#activo = true;
-    this.#siguientePalabra();
+    this.#avanzar();
   }
 
   detener() {
     if (!this.#activo) return;
-    this.#fin = performance.now();
+    // Si se acabó el tiempo, la prueba dura exactamente el límite aunque el aviso llegue tarde.
+    const { segundos } = this.#limite;
+    const ahora = performance.now();
+    this.#fin = segundos === null ? ahora : Math.min(ahora, this.#inicio + segundos * 1000);
     this.#activo = false;
     this.#intento = '';
   }
@@ -92,38 +119,39 @@ export class Modelo {
   /**
    * Registra el contenido del campo. Cada letra nueva cuenta como pulsación y, si no
    * coincide con la de su posición, como fallo.
-   * @returns {boolean} true si completa la palabra; entonces ya hay otra en curso.
    */
   escribir(texto) {
-    if (!this.#activo) return false;
+    if (!this.#activo || this.limiteAlcanzado) return;
     const intento = Modelo.#normalizar(texto);
     for (let i = this.#intento.length; i < intento.length; i++) {
       this.#pulsaciones++;
-      if (intento[i] !== this.#objetivo[i]) {
+      if (intento[i] !== this.#palabra[i]) {
         this.#fallos++;
-        this.#anotarFallo(this.#objetivo[i], intento[i]);
+        this.#anotarFallo(this.#palabra[i], intento[i]);
       }
     }
     this.#intento = intento;
-    if (intento !== this.#objetivo) return false;
-
-    this.#correctas++;
-    this.#siguientePalabra();
-    return true;
   }
 
   /**
-   * Validación explícita (Espacio o Intro). Si lo escrito es correcto pero incompleto, cuenta un
-   * fallo; si ya tenía un error, ese fallo se contó al teclearlo y no se suma otro.
+   * Espacio o Intro: si la palabra está completa y sin errores, suma y pasa a la siguiente.
+   * Si lo escrito es correcto pero incompleto, cuenta un fallo; si ya tenía un error, ese
+   * fallo se contó al teclearlo y no se suma otro.
    * @returns {boolean} true si era correcta.
    */
   confirmar(texto) {
-    if (!this.#activo) return false;
-    if (this.escribir(texto)) return true;
+    if (!this.#activo || this.limiteAlcanzado) return false;
+    this.escribir(texto);
+    if (this.#intento === this.#palabra) {
+      this.#pulsaciones++; // el espacio también es una pulsación
+      this.#correctas++;
+      this.#avanzar();
+      return true;
+    }
     if (!this.hayError) {
       this.#pulsaciones++;
       this.#fallos++;
-      this.#anotarFallo(this.#objetivo[this.#intento.length]); // la letra que faltaba
+      this.#anotarFallo(this.#palabra[this.#intento.length]); // la letra que faltaba
     }
     return false;
   }
@@ -134,29 +162,45 @@ export class Modelo {
     this.#fallosPorTecla.set(tecla, (this.#fallosPorTecla.get(tecla) ?? 0) + 1);
   }
 
-  // Se culpa a la tecla de la letra pedida; si solo faltó la tilde (a por á), a la tecla ´.
-  // La ñ es su propia tecla: por eso la tabla explícita y no NFD.
+  // Se culpa a la tecla de la letra pedida. Si solo falló la mayúscula, a la tecla de mayúsculas;
+  // si solo faltó la tilde (a por á), a la tecla ´. La ñ es su propia tecla: por eso la tabla
+  // explícita y no NFD.
   static #teclaDe(esperada, escrita) {
-    const base = BASE_ACENTUADA[esperada];
-    if (base && escrita === base) return '´';
-    return base ?? esperada;
+    const pedida = esperada.toLocaleLowerCase('es');
+    const tecleada = escrita?.toLocaleLowerCase('es');
+    if (tecleada === pedida) return TECLA_MAYUS;
+    const base = BASE_ACENTUADA[pedida];
+    if (base && tecleada === base) return '´';
+    return base ?? pedida;
   }
 
-  #siguientePalabra() {
-    // Se sortea entre las demás para no repetir la anterior sin tener que reintentar.
-    const total = this.#palabras.length;
-    let indice = Math.floor(Math.random() * (this.#indice < 0 ? total : total - 1));
-    if (this.#indice >= 0 && indice >= this.#indice) indice++;
-
-    this.#indice = indice;
-    this.#palabra = this.#palabras[indice];
-    this.#objetivo = Modelo.#normalizar(this.#palabra);
+  // La primera de la cola pasa a escribirse y entra una nueva por el final.
+  #avanzar() {
+    const [primera, ...resto] = this.#cola;
+    this.#palabra = primera;
+    this.#cola = [...resto, this.#sortear()];
     this.#intento = '';
   }
 
-  // Se exigen las tildes pero no las mayúsculas. NFC une la tilde y la vocal cuando el
-  // teclado las entrega como dos caracteres.
+  // Se sortea entre las demás para no repetir la última de la cola sin tener que reintentar.
+  #sortear() {
+    const total = this.#palabras.length;
+    const ultima = this.#indiceUltima;
+    let indice = Math.floor(Math.random() * (ultima < 0 ? total : total - 1));
+    if (ultima >= 0 && indice >= ultima) indice++;
+
+    this.#indiceUltima = indice;
+    return Modelo.#quizaConMayuscula(this.#palabras[indice]);
+  }
+
+  static #quizaConMayuscula(palabra) {
+    if (Math.random() >= PROBABILIDAD_MAYUSCULA) return palabra;
+    return palabra[0].toLocaleUpperCase('es') + palabra.slice(1);
+  }
+
+  // Se exigen tildes y mayúsculas. NFC une la tilde y la vocal cuando el teclado las entrega
+  // como dos caracteres.
   static #normalizar(texto) {
-    return texto.normalize('NFC').toLocaleLowerCase('es');
+    return texto.normalize('NFC');
   }
 }
