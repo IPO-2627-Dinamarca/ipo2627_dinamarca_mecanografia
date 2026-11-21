@@ -11,6 +11,14 @@ const FILAS = ['qwertyuiop', 'asdfghjklñ´', '⇧zxcvbnm'];
 const NOMBRES_TECLA = { '´': 'tilde', '⇧': 'mayúsculas' };
 const NIVELES = 4;
 const TECLAS_EN_RESUMEN = 5;
+const FALLADAS_EN_RESUMEN = 5;
+
+// Gráfica de ritmo en unidades del viewBox (288 × 112, que a tamaño natural son 18rem × 7rem).
+const SVG = 'http://www.w3.org/2000/svg';
+const RITMO = { izquierda: 2, derecha: 254, techo: 18, base: 80, marca: 6, rotulo: 106 };
+// Por debajo de este tiempo la serie tendría tan pocos puntos que no diría nada.
+const RITMO_MIN_S = 10;
+const SEGUNDOS_EN_RESUMEN = 6;
 
 // Lo tecleado de más que admite el campo; más allá no aporta nada y rompería la línea.
 const SOBRANTES_MAX = 3;
@@ -20,6 +28,14 @@ const INSERCIONES_BLOQUEADAS = new Set([
 ]);
 
 const nombreTecla = (tecla) => NOMBRES_TECLA[tecla] ?? tecla;
+
+// Los primeros max elementos y, si sobran, cuántos más.
+function listaAcotada(elementos, max) {
+  const partes = elementos.slice(0, max);
+  const resto = elementos.length - max;
+  if (resto > 0) partes.push(`${resto} más`);
+  return LISTA.format(partes);
+}
 
 const textoCorrectas = (n) => `${n} ${n === 1 ? 'palabra correcta' : 'palabras correctas'}`;
 
@@ -54,6 +70,40 @@ const leerLimite = (raiz, nombre) => {
   return valor === '' ? null : Number(valor);
 };
 
+function crearSvg(padre, etiqueta, clase, atributos = {}) {
+  const nodo = document.createElementNS(SVG, etiqueta);
+  nodo.setAttribute('class', clase);
+  for (const [nombre, valor] of Object.entries(atributos)) nodo.setAttribute(nombre, valor);
+  padre.append(nodo);
+  return nodo;
+}
+
+function crearPalabraEscrita({ texto, conFallos }) {
+  const li = document.createElement('li');
+  li.className = `escrita__palabra${conFallos ? ' escrita__palabra--fallo' : ''}`;
+  li.textContent = texto;
+  return li;
+}
+
+function resumirRitmo(puntos, fallos) {
+  const [desde, hasta] = [puntos[0], puntos.at(-1)].map((p) => ENTERO.format(p.ppm));
+  const valores = puntos.map((p) => p.ppm);
+  const [menor, mayor] = [Math.min(...valores), Math.max(...valores)].map((n) => ENTERO.format(n));
+  const ritmo = desde !== hasta ? `Ritmo: de ${desde} a ${hasta} ppm.`
+    : menor === mayor ? `Ritmo: ${hasta} ppm de principio a fin.`
+      : `Ritmo: empieza y acaba en ${hasta} ppm, entre ${menor} y ${mayor}.`;
+  if (fallos.length === 0) return `${ritmo} Sin fallos.`;
+
+  // Segundo de cada fallo como ordinal (el primero es el 1), sin repetir.
+  const segundos = [...new Set(fallos.map((s) => Math.max(1, Math.ceil(s))))].map(String);
+  const cuantos = fallos.length === 1 ? 'Un fallo' : `${ENTERO.format(fallos.length)} fallos`;
+  const cuando = segundos.length === 1 ? `en el segundo ${segundos[0]}.`
+    : segundos.length > SEGUNDOS_EN_RESUMEN
+      ? `en los segundos ${segundos.slice(0, SEGUNDOS_EN_RESUMEN).join(', ')}…`
+      : `en los segundos ${LISTA.format(segundos)}.`;
+  return `${ritmo} ${cuantos}, ${cuando}`;
+}
+
 const textoTope = (limite) => (limite === null ? '' : `de ${ENTERO.format(limite)}`);
 
 /** Presentación en el DOM. Recibe valores ya calculados y avisa al controlador de lo que hace el usuario. */
@@ -75,6 +125,8 @@ export class Vista {
   #informe;
   #resumen;
   #teclas;
+  #ritmo;
+  #escrita;
   #letras = [];
 
   constructor(raiz = document) {
@@ -95,6 +147,8 @@ export class Vista {
     this.#informe = nodo('informe');
     this.#resumen = nodo('fallos-resumen');
     this.#teclas = Vista.#crearTeclado(nodo('teclado'));
+    this.#ritmo = { ...Vista.#crearRitmo(nodo('ritmo')), resumen: nodo('ritmo-resumen') };
+    this.#escrita = nodo('escrita');
     this.#resultado = {
       panel: nodo('resultado'),
       ppm: nodo('resultado-ppm'),
@@ -189,6 +243,8 @@ export class Vista {
     this.#topes.segundos.textContent = textoTope(limite.segundos);
     this.#resultado.panel.hidden = true;
     this.#informe.hidden = true;
+    this.#escrita.replaceChildren();
+    this.#escrita.hidden = true;
     this.#palabra.hidden = false;
     this.limpiarCampo();
     this.marcarError(false);
@@ -203,7 +259,7 @@ export class Vista {
     this.#cola.replaceChildren(...siguientes.map(crearPalabraEnCola));
     this.#letras = [...palabra].map(crearLetra);
     this.#palabra.replaceChildren(...this.#letras);
-    this.#letras[0].classList.add('letra--cursor');
+    this.#palabra.style.setProperty('--cursor', 0);
     // Con ella el CSS ajusta el cuerpo de la muestra y del campo a la longitud de la palabra.
     this.#hoja.style.setProperty('--letras', this.#letras.length);
     this.#campo.setAttribute('maxlength', this.#letras.length + SOBRANTES_MAX);
@@ -219,10 +275,12 @@ export class Vista {
     while (this.#letras.length > progreso.length) this.#letras.pop().remove();
 
     const cursor = progreso.findIndex(({ estado }) => estado === 'pendiente');
+    // Caracteres tecleados, sobrantes incluidos: la posición del cursor en la muestra.
+    this.#palabra.style.setProperty('--cursor', cursor === -1 ? progreso.length : cursor);
     this.#letras.forEach((span, i) => {
       const { letra, estado } = progreso[i];
       escribirTexto(span, letra);
-      const clase = `letra letra--${estado}${i === cursor ? ' letra--cursor' : ''}`;
+      const clase = `letra letra--${estado}`;
       if (span.className !== clase) span.className = clase;
     });
   }
@@ -232,6 +290,12 @@ export class Vista {
     escribirTexto(this.#correctas, ENTERO.format(correctas));
     escribirTexto(this.#segundos, ENTERO.format(segundos));
     escribirTexto(this.#ppm, ppm === null ? '—' : ENTERO.format(ppm));
+  }
+
+  /** Fracción (0–1) del límite ya cumplida, en --progreso de la hoja; null la retira. */
+  mostrarAvance(fraccion) {
+    if (fraccion === null) this.#hoja.style.removeProperty('--progreso');
+    else this.#hoja.style.setProperty('--progreso', fraccion.toFixed(4));
   }
 
   /** Cambia aria-invalid, del que cuelga el estilo de error, y lo anuncia solo al aparecer. */
@@ -258,9 +322,11 @@ export class Vista {
 
   /**
    * @param {{ppm: number, correctas: number, segundos: number, precision: number|null,
-   *          mejorMarca: number, record: boolean, fallos: Map<string, number>}} resultado
+   *          mejorMarca: number, record: boolean, fallos: Map<string, number>,
+   *          ritmo: {puntos: {s: number, ppm: number}[], fallos: number[], duracion: number},
+   *          escritas: {texto: string, conFallos: boolean}[]}} resultado
    */
-  mostrarResultado({ ppm, correctas, segundos, precision, mejorMarca, record, fallos }) {
+  mostrarResultado({ ppm, correctas, segundos, precision, mejorMarca, record, fallos, ritmo, escritas }) {
     const r = this.#resultado;
     r.ppm.textContent = ENTERO.format(ppm);
     r.tiempo.textContent = SEGUNDOS.format(segundos);
@@ -270,6 +336,10 @@ export class Vista {
     this.#pintarFallos(fallos);
     const resumen = precision === null ? 'No se ha tecleado nada en esta prueba.' : Vista.#resumir(fallos);
     this.#resumen.textContent = resumen;
+    this.#pintarRitmo(ritmo);
+    this.#escrita.replaceChildren(...escritas.map(crearPalabraEscrita));
+    this.#escrita.hidden = escritas.length === 0;
+    const falladas = [...new Set(escritas.filter((p) => p.conFallos).map((p) => p.texto))];
 
     this.#cambiarEstado('parado');
     this.limpiarCampo();
@@ -283,7 +353,8 @@ export class Vista {
     this.anunciar(
       `Prueba detenida. ${textoCorrectas(correctas)} en ${SEGUNDOS.format(segundos)}: `
       + `${ENTERO.format(ppm)} palabras por minuto${detalle}.${record ? ' Nueva mejor marca.' : ''}`
-      + (precision === null ? '' : ` ${resumen}`),
+      + (precision === null ? '' : ` ${resumen}`)
+      + (falladas.length === 0 ? '' : ` Palabras con fallos: ${listaAcotada(falladas, FALLADAS_EN_RESUMEN)}.`),
     );
   }
 
@@ -312,6 +383,54 @@ export class Vista {
     return teclas;
   }
 
+  /** Crea una vez los nodos de la gráfica de ritmo; después solo cambian sus atributos y textos. */
+  static #crearRitmo(svg) {
+    const { izquierda, derecha, techo, base, rotulo } = RITMO;
+    crearSvg(svg, 'line', 'ritmo__rejilla', { x1: izquierda, x2: derecha, y1: techo, y2: techo });
+    crearSvg(svg, 'line', 'ritmo__eje', { x1: izquierda, x2: derecha, y1: base, y2: base });
+    const nodos = {
+      svg,
+      tope: crearSvg(svg, 'text', 'ritmo__texto', { x: izquierda, y: techo - 5 }),
+      fallos: crearSvg(svg, 'path', 'ritmo__fallos'),
+      linea: crearSvg(svg, 'polyline', 'ritmo__linea'),
+      punto: crearSvg(svg, 'circle', 'ritmo__punto', { r: 4 }),
+      final: crearSvg(svg, 'text', 'ritmo__texto ritmo__texto--final'),
+      inicio: crearSvg(svg, 'text', 'ritmo__texto', { x: izquierda, y: rotulo }),
+      duracion: crearSvg(svg, 'text', 'ritmo__texto', { x: derecha, y: rotulo, 'text-anchor': 'end' }),
+    };
+    nodos.inicio.textContent = SEGUNDOS.format(0);
+    return nodos;
+  }
+
+  // Escalas lineales: el tiempo de 0 a la duración y las PPM de 0 a la referencia, que es el
+  // máximo redondeado hacia arriba a decenas.
+  #pintarRitmo({ puntos, fallos, duracion }) {
+    const r = this.#ritmo;
+    const dibujable = duracion >= RITMO_MIN_S && puntos.length > 0;
+    r.svg.toggleAttribute('hidden', !dibujable);
+    if (!dibujable) {
+      r.resumen.textContent = `La prueba ha sido demasiado corta para dibujar el ritmo: hacen falta ${SEGUNDOS.format(RITMO_MIN_S)}.`;
+      return;
+    }
+
+    const { izquierda, derecha, techo, base, marca } = RITMO;
+    const tope = Math.max(10, Math.ceil(Math.max(...puntos.map((p) => p.ppm)) / 10) * 10);
+    const x = (s) => izquierda + (s / duracion) * (derecha - izquierda);
+    const y = (ppm) => base - (ppm / tope) * (base - techo);
+    const final = puntos.at(-1);
+
+    r.tope.textContent = `${ENTERO.format(tope)} ppm`;
+    r.linea.setAttribute('points', puntos.map((p) => `${x(p.s).toFixed(1)},${y(p.ppm).toFixed(1)}`).join(' '));
+    r.punto.setAttribute('cx', x(final.s).toFixed(1));
+    r.punto.setAttribute('cy', y(final.ppm).toFixed(1));
+    r.final.setAttribute('x', (x(final.s) + 7).toFixed(1));
+    r.final.setAttribute('y', (y(final.ppm) + 4).toFixed(1));
+    r.final.textContent = ENTERO.format(final.ppm);
+    r.fallos.setAttribute('d', fallos.map((s) => `M${x(s).toFixed(1)} ${base + 2}v${marca}`).join(''));
+    r.duracion.textContent = SEGUNDOS.format(duracion);
+    r.resumen.textContent = resumirRitmo(puntos, fallos);
+  }
+
   // El reparto en niveles es presentación: la tecla más fallada siempre llega al último.
   #pintarFallos(fallos) {
     const max = Math.max(0, ...fallos.values());
@@ -325,10 +444,8 @@ export class Vista {
   static #resumir(fallos) {
     if (fallos.size === 0) return 'Ninguna tecla fallada en esta prueba.';
     const orden = [...fallos].sort((a, b) => b[1] - a[1]);
-    const partes = orden.slice(0, TECLAS_EN_RESUMEN).map(([tecla, n]) => `${nombreTecla(tecla)} (${n})`);
-    const resto = orden.length - TECLAS_EN_RESUMEN;
-    if (resto > 0) partes.push(`${resto} más`);
-    return `Teclas con fallos: ${LISTA.format(partes)}.`;
+    const partes = orden.map(([tecla, n]) => `${nombreTecla(tecla)} (${n})`);
+    return `Teclas con fallos: ${listaAcotada(partes, TECLAS_EN_RESUMEN)}.`;
   }
 
   mostrarError(mensaje) {
