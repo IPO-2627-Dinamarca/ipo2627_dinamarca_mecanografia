@@ -75,10 +75,20 @@
           <dd class="marcador__tope" data-vista="tope-segundos"></dd>
         </div>
         <div class="marcador marcador--ritmo">
-          <dt class="marcador__etiqueta"><abbr title="palabras por minuto">ppm</abbr></dt>
+          <dt class="marcador__etiqueta"><abbr title="palabras por minuto">palabras/min</abbr></dt>
           <dd class="marcador__valor" data-vista="ppm">—</dd>
         </div>
+        <div class="marcador marcador--ritmo">
+          <dt class="marcador__etiqueta"><abbr title="pulsaciones por minuto">ppm</abbr></dt>
+          <dd class="marcador__valor" data-vista="pulsaciones">—</dd>
+        </div>
       </dl>
+
+      <fieldset class="selector vista-resultado">
+        <legend class="selector__titulo visualmente-oculto">Ver</legend>
+        <label class="selector__opcion"><input type="radio" name="vista-resultado" value="hoja" checked>Hoja</label>
+        <label class="selector__opcion"><input type="radio" name="vista-resultado" value="detalle">Detalle</label>
+      </fieldset>
 
       <section class="prueba" aria-labelledby="prueba-titulo">
         <h2 class="visualmente-oculto" id="prueba-titulo">Prueba</h2>
@@ -91,7 +101,10 @@
             <h3 class="visualmente-oculto" id="resultado-titulo">Resultado</h3>
             <p class="resultado__principal">
               <span class="resultado__ppm" data-vista="resultado-ppm">0</span>
-              <span class="resultado__unidad">palabras por minuto</span>
+              <span class="resultado__unidades">
+                <span class="resultado__unidad">palabras por minuto</span>
+                <span class="resultado__unidad"><span class="resultado__pulsaciones" data-vista="resultado-pulsaciones">0</span> pulsaciones por minuto</span>
+              </span>
             </p>
           </section>
 
@@ -129,12 +142,12 @@
             <dd class="marcador__valor" data-vista="resultado-tiempo">0 s</dd>
           </div>
           <div class="marcador">
-            <dt class="marcador__etiqueta">precisión</dt>
+            <dt class="marcador__etiqueta">precisión real</dt>
             <dd class="marcador__valor" data-vista="resultado-precision">—</dd>
           </div>
           <div class="marcador">
-            <dt class="marcador__etiqueta">mejor marca</dt>
-            <dd class="marcador__valor" data-vista="resultado-marca">—</dd>
+            <dt class="marcador__etiqueta">precisión final</dt>
+            <dd class="marcador__valor" data-vista="resultado-precision-final">—</dd>
           </div>
         </dl>
         <dl class="informe__datos informe__datos--errores">
@@ -151,7 +164,8 @@
             <dd class="marcador__valor" data-vista="resultado-sin-corregir">0</dd>
           </div>
         </dl>
-        <p class="informe__record" data-vista="resultado-record" hidden>Nueva mejor marca.</p>
+        <p class="informe__marca">Mejor marca: <span class="informe__valor" data-vista="resultado-marca">—</span>
+          <span class="informe__record" data-vista="resultado-record" hidden>(nueva)</span></p>
 
         <figure class="ritmo">
           <svg class="ritmo__grafica" data-vista="ritmo" viewBox="0 0 288 112" aria-hidden="true" focusable="false"></svg>
