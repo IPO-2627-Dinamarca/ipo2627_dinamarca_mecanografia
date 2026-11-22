@@ -24,6 +24,12 @@
   .prueba { grid-area: prueba; }
   .informe { grid-area: informe; }
 
+  /* El conmutador Hoja / Detalle solo existe en móvil y con el resultado a la vista */
+  .selector.vista-resultado {
+    grid-area: vista;
+    display: none;
+  }
+
   /* Contenedor de consulta: el mando se apila cuando la columna es estrecha.
      Móvil: una columna en el orden del DOM. */
   .principal {
@@ -126,18 +132,41 @@
   }
 
   .marcadores {
+    container: marcadores / inline-size;
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: var(--espacio-2) var(--espacio-5);
   }
 
-  /* Con la columna central en su mínimo no caben los tres con topes de tres cifras: las ppm van siempre
-     en su propia línea, para que la fila no se parta a mitad de prueba y empuje la hoja */
-  @media (64rem <= width < 80rem) {
-    .marcador--ritmo {
-      flex-basis: 100%;
-      justify-content: end;
+  /* Con la columna central en su mínimo no caben los cuatro con topes de tres cifras en una línea: dos filas fijas,
+     correctas y segundos arriba; palabras/min y ppm abajo. Así no se parte nada a mitad de prueba. */
+  @media (48rem <= width < 80rem) {
+    .marcadores {
+      display: grid;
+      grid-template-columns: repeat(2, auto);
+      justify-content: space-between;
+    }
+
+    .marcadores > :nth-child(even) {
+      justify-self: end;
+    }
+
+    .marcadores > .marcador--ritmo {
+      margin-inline-start: 0;
+    }
+  }
+
+  /* Escritorio ancho: los cuatro en una línea; los dos de ritmo juntos al final */
+  @media (width >= 80rem) {
+    .marcadores {
+      column-gap: var(--espacio-3);
+    }
+
+    @container marcadores (inline-size < 42rem) {
+      .marcadores {
+        column-gap: 0.75rem;
+      }
     }
   }
 
@@ -146,7 +175,7 @@
     display: grid;
     grid-template-columns: repeat(3, auto);
     justify-content: space-between;
-    gap: var(--espacio-3);
+    gap: var(--espacio-2);
   }
 
   .marcador {
@@ -171,10 +200,36 @@
     margin-inline-start: auto;
   }
 
-  /* Columna estrecha: correctas en una línea; segundos y ppm en la siguiente, a los dos extremos */
+  .marcador--ritmo + .marcador--ritmo {
+    margin-inline-start: 0;
+  }
+
+  /* Columna estrecha: cuatro marcadores en dos filas de dos, cada uno con la cifra y el tope sobre el nombre */
   @container principal (inline-size < 30rem) {
-    .marcadores > :first-child {
-      flex-basis: 100%;
+    .marcadores {
+      display: grid;
+      grid-template-columns: repeat(2, auto);
+      justify-content: space-between;
+      gap: var(--espacio-1) var(--espacio-3);
+    }
+
+    .marcadores > :nth-child(even) {
+      justify-self: end;
+    }
+
+    .marcadores > .marcador--ritmo {
+      margin-inline-start: 0;
+    }
+
+    .marcadores .marcador {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: baseline;
+      gap: 0 0.35em;
+    }
+
+    .marcadores .marcador__etiqueta {
+      grid-column: 1 / -1;
     }
   }
 
@@ -203,6 +258,35 @@
   @container principal (inline-size < 30rem) {
     .hoja {
       --cuerpo-max: min(4.5rem, 7dvh);
+    }
+  }
+
+  /* Móvil con el resultado: la hoja y el detalle no caben a la vez; un conmutador de CSS puro (:has) elige uno
+     y el detalle ocupa el sitio de la hoja, entre el conmutador y el botón */
+  @media (width < 48rem) {
+    .principal:has(.informe:not([hidden])) {
+      grid-template-areas:
+        "ajustes"
+        "marcadores"
+        "vista"
+        "informe"
+        "prueba";
+
+      & .selector.vista-resultado {
+        display: flex;
+      }
+
+      /* Los marcadores repiten lo que ya está en la hoja y el detalle; con el detalle a la vista tampoco
+         se ofrecen los límites, que vuelven con «Hoja» */
+      & .marcadores,
+      &:has([value="detalle"]:checked) .ajustes {
+        display: none;
+      }
+
+      &:not(:has([value="detalle"]:checked)) .informe,
+      &:has([value="detalle"]:checked) .hoja {
+        display: none;
+      }
     }
   }
 
@@ -307,29 +391,23 @@
     gap: var(--espacio-2);
   }
 
+  /* Juntas las piezas del detalle: en móvil ocupa el sitio de la hoja y en su columna tiene el alto justo */
   .informe {
     display: grid;
-    gap: var(--espacio-4);
-    margin-block-start: var(--espacio-4);
+    gap: var(--espacio-2);
   }
 
-  /* En su columna, el detalle empieza a la altura de la hoja y las teclas aprovechan el ancho */
+  /* En su columna, las teclas aprovechan el ancho */
   @media (width >= 48rem) {
-    .informe {
-      gap: var(--espacio-2);
-      margin-block-start: 0;
-    }
-
     .teclado {
       column-gap: 0.125rem;
     }
+  }
 
-    .informe__datos {
-      gap: var(--espacio-2);
-    }
-
-    .fallos {
-      gap: var(--espacio-2);
+  /* Ventanas bajas: el margen exterior baja de 4dvh a 3dvh para que el detalle completo quepa a 1366 × 657 */
+  @media (width >= 64rem) and (height < 45rem) {
+    .app {
+      --respiro: min(var(--espacio-5), 3dvh);
     }
   }
 
@@ -343,7 +421,7 @@
 
   .fallos {
     display: grid;
-    gap: var(--espacio-3);
+    gap: var(--espacio-2);
   }
 
   /* 23 medias teclas: cada tecla ocupa dos y las filas se escalonan media tecla y una tecla */
