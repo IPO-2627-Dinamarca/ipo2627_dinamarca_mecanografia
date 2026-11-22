@@ -4,6 +4,8 @@ const BASE_ACENTUADA = { á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ü: 'u' };
 const TECLA_MAYUS = '⇧';
 // Una de cada cinco palabras sale con la inicial en mayúscula.
 const PROBABILIDAD_MAYUSCULA = 0.2;
+// Una de cada trescientas sale de las raras (el resto del diccionario) en lugar de las comunes.
+const PROBABILIDAD_RARA = 1 / 300;
 // Palabras que se ven por adelantado debajo de la que se está escribiendo.
 const EN_COLA = 3;
 const SIN_LIMITE = Object.freeze({ segundos: null, palabras: null });
@@ -12,13 +14,17 @@ const MODO_POR_DEFECTO = 'libre';
 
 /** Estado de una prueba: palabra en curso, aciertos, pulsaciones y tiempo transcurrido. */
 export class Modelo {
-  #palabras;
-  #indiceUltima = -1;
+  #comunes;
+  #raras;
+  #ultima = '';
   #palabra = '';
   #cola = [];
   #intento = '';
   #correctas = 0;
   #pulsaciones = 0;
+  // Teclas que escriben de verdad; a diferencia de #pulsaciones, no incluye las letras que
+  // el modelo apunta como fallo al pasar una palabra incompleta.
+  #teclas = 0;
   #fallos = 0;
   #inicio = 0;
   #fin = 0;
@@ -34,13 +40,14 @@ export class Modelo {
   #inicioError = null;
   #palabraConFallo = false;
 
-  /** @param {string[]} palabras sin repetidas */
-  constructor(palabras) {
+  /** @param {{comunes: string[], raras: string[]}} palabras listas sin repetidas */
+  constructor({ comunes, raras = [] }) {
     // Con una sola palabra no habría forma de no repetir la anterior.
-    if (palabras.length < 2) {
-      throw new Error('La lista necesita al menos dos palabras distintas.');
+    if (comunes.length < 2) {
+      throw new Error('La lista necesita al menos dos palabras comunes distintas.');
     }
-    this.#palabras = palabras;
+    this.#comunes = comunes;
+    this.#raras = raras;
   }
 
   get activo() { return this.#activo; }
@@ -95,9 +102,21 @@ export class Modelo {
     return ms > 0 ? (this.#correctas * 60_000) / ms : 0;
   }
 
+  /** Pulsaciones brutas por minuto: todas las teclas que escriben, también las erróneas o borradas. */
+  get pulsacionesPorMinuto() {
+    const ms = this.milisegundos;
+    return ms > 0 ? (this.#teclas * 60_000) / ms : 0;
+  }
+
   /** Fracción de pulsaciones correctas (0–1), o null si aún no se ha tecleado nada. */
   get precision() {
     return this.#pulsaciones > 0 ? (this.#pulsaciones - this.#fallos) / this.#pulsaciones : null;
+  }
+
+  /** Fracción de palabras pasadas que se entregaron bien (0–1), o null si no se pasó ninguna. */
+  get precisionPalabras() {
+    const pasadas = this.#pasadas.length;
+    return pasadas > 0 ? this.#correctas / pasadas : null;
   }
 
   /** Avance hacia el límite (0–1): el más cercano de los que haya; null sin límite. */
@@ -168,6 +187,7 @@ export class Modelo {
     this.#modo = modo === 'estricto' ? 'estricto' : 'libre';
     this.#correctas = 0;
     this.#pulsaciones = 0;
+    this.#teclas = 0;
     this.#fallos = 0;
     this.#fallosPorTecla.clear();
     this.#pasadas = [];
@@ -201,6 +221,7 @@ export class Modelo {
     const habiaError = this.hayError;
     for (let i = this.#intento.length; i < intento.length; i++) {
       this.#pulsaciones++;
+      this.#teclas++;
       if (intento[i] !== this.#palabra[i]) this.#fallar(this.#palabra[i], intento[i]);
     }
     this.#intento = intento;
@@ -226,10 +247,12 @@ export class Modelo {
     if (this.#intento === '') return null;
     if (this.#intento === this.#palabra) {
       this.#pulsaciones++; // el espacio también es una pulsación
+      this.#teclas++;
       this.#correctas++;
       return this.#pasar(this.#palabraConFallo ? 'corregida' : 'bien');
     }
     if (this.#modo === 'libre') {
+      this.#teclas++; // el espacio que pasa de palabra; las letras que faltan no se teclearon
       for (const letra of this.#palabra.slice(this.#intento.length)) {
         this.#pulsaciones++;
         this.#fallar(letra);
@@ -284,15 +307,15 @@ export class Modelo {
     this.#palabraConFallo = false;
   }
 
-  // Se sortea entre las demás para no repetir la última de la cola sin tener que reintentar.
+  // Casi siempre una común y, de vez en cuando, una rara; nunca la misma que la última de la cola.
   #sortear() {
-    const total = this.#palabras.length;
-    const ultima = this.#indiceUltima;
-    let indice = Math.floor(Math.random() * (ultima < 0 ? total : total - 1));
-    if (ultima >= 0 && indice >= ultima) indice++;
+    const lista = this.#raras.length > 1 && Math.random() < PROBABILIDAD_RARA ? this.#raras : this.#comunes;
+    let palabra;
+    do palabra = lista[Math.floor(Math.random() * lista.length)];
+    while (palabra === this.#ultima);
 
-    this.#indiceUltima = indice;
-    return Modelo.#quizaConMayuscula(this.#palabras[indice]);
+    this.#ultima = palabra;
+    return Modelo.#quizaConMayuscula(palabra);
   }
 
   static #quizaConMayuscula(palabra) {
