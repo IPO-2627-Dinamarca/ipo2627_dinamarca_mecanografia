@@ -58,6 +58,7 @@
     border: 2px solid var(--tinta);
     border-radius: var(--radio);
     cursor: pointer;
+    touch-action: manipulation;
 
     /* Una sola tira: borde exterior de 2px y separadores de 1px */
     &:not(:last-of-type) {
@@ -106,6 +107,10 @@
     }
   }
 
+  .vista-resultado .selector__opcion {
+    flex: 1;
+  }
+
   /* En la tira estrecha cada botón cede hasta el ancho de su número: los cinco caben en 11rem */
   @container ajustes (inline-size < 20rem) {
     .selector__opcion {
@@ -143,6 +148,36 @@
     font-weight: var(--peso-fuerte);
     line-height: 1;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Escritorio ancho: la fila lleva los cuatro con topes de tres cifras en 44rem, así que nombres y topes
+     bajan un paso */
+  @media (width >= 80rem) {
+    .marcadores :is(.marcador__etiqueta, .marcador__tope) {
+      font-size: var(--paso--1);
+    }
+
+    /* Hasta 1366px de ancho la columna central mide menos de 42rem y las cifras bajan un paso */
+    @container marcadores (inline-size < 42rem) {
+      .marcadores .marcador__valor {
+        font-size: var(--paso-2);
+      }
+    }
+  }
+
+  /* Columna estrecha: cifra a --paso-1 y nombres a --paso--1, como en el detalle */
+  @container principal (inline-size < 30rem) {
+    .marcadores .marcador__valor {
+      font-size: var(--paso-1);
+    }
+
+    .marcadores :is(.marcador__etiqueta, .marcador__tope) {
+      font-size: var(--paso--1);
+    }
+
+    .marcadores .marcador__tope {
+      line-height: 1;
+    }
   }
 
   /* Con el resultado abierto la cifra está en la hoja; visibility conserva el alto de la línea */
@@ -314,8 +349,26 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Las dos unidades apiladas: la de las palabras arriba y la de las pulsaciones, más pequeña, apoyada en la
+     línea base de la cifra */
+  .resultado__unidades {
+    display: grid;
+    min-inline-size: 0;
+  }
+
   .resultado__unidad {
     color: var(--tinta-suave);
+  }
+
+  .resultado__unidad + .resultado__unidad {
+    font-size: var(--paso--1);
+    line-height: 1.3;
+  }
+
+  .resultado__pulsaciones {
+    font-weight: var(--peso-fuerte);
+    font-variant-numeric: tabular-nums;
+    color: var(--tinta);
   }
 
   /* Hoja escrita: las palabras pasadas, una tras otra; las corregidas con el subrayado del error y las sin corregir
@@ -450,6 +503,7 @@
     border: 2px solid var(--tinta);
     border-radius: var(--radio);
     cursor: pointer;
+    touch-action: manipulation;
 
     &::before {
       content: "";
@@ -510,12 +564,25 @@
     font-weight: var(--peso-fuerte);
   }
 
-  /* Por debajo de los marcadores: los tres, con unidades («11,8 s», «155 ppm»), caben en una fila de 18rem */
+  /* En móvil el conmutador ya dice «Detalle»: el título queda para el lector de pantalla */
+  @media (width < 48rem) {
+    .informe__titulo {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  /* Por debajo de los marcadores: los tres, con unidades («11,8 s», «100 %»), caben en una fila de 18rem */
   .informe__datos .marcador__valor {
     font-size: var(--paso-1);
     white-space: nowrap;
   }
 
+  .informe__valor,
   .informe__record {
     font-weight: var(--peso-fuerte);
   }
@@ -530,6 +597,7 @@
 
     .ritmo__resumen,
     .fallos__resumen,
+    .informe__marca,
     .informe__practicar {
       font-size: var(--paso--1);
       line-height: 1.35;
@@ -618,6 +686,43 @@
       & .hoja {
         --cuerpo-max: 3.25rem;
         padding-block: var(--espacio-2);
+      }
+    }
+  }
+
+  /* Pantallas estrechas y muy bajas (320 × 568) antes de empezar: límites en tiras sin nombre, título más
+     pequeño, huecos recogidos, sin cola ni ayuda a la vista, para que el inicio quepa sin desplazarse. Los
+     nombres quedan para el lector de pantalla. */
+  @media (width < 30rem) and (height < 36rem) {
+    .app:not([data-estado="activo"]) {
+      --respiro: 2dvh;
+
+      & .cabecera__titulo {
+        font-size: var(--paso-2);
+      }
+
+      & .selector__titulo,
+      & .controles__etiqueta,
+      & .ayuda--parado {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      & .ajustes {
+        row-gap: var(--espacio-1);
+      }
+
+      & .cola {
+        block-size: 0;
+      }
+
+      & .ayuda--activo,
+      & .controles__error {
+        display: none;
       }
     }
   }
@@ -771,15 +876,12 @@
       background-color: CanvasText;
     }
 
+    /* Corregida: solo el subrayado ondulado. Sin corregir: tachado y recuadro. Ninguna lleva fondo. */
     .escrita__palabra--corregida,
     .escrita__escrito {
       forced-color-adjust: none;
-      color: MarkText;
-      background-color: Mark;
-    }
-
-    .escrita__escrito {
-      text-decoration-color: MarkText;
+      color: CanvasText;
+      text-decoration-color: CanvasText;
     }
 
     .escrita__pedida {
@@ -821,6 +923,12 @@
         color: MarkText;
         background-color: Mark;
       }
+
+      /* Sin gradación de color: el nivel se lee en el grosor del borde, que no cambia el tamaño exterior */
+      &[data-nivel="1"] { border-width: 1px; }
+      &[data-nivel="2"] { border-width: 2px; }
+      &[data-nivel="3"] { border-width: 3px; }
+      &[data-nivel="4"] { border-width: 4px; }
     }
 
     .tecla__cuenta {
