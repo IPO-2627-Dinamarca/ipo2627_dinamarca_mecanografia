@@ -71,15 +71,16 @@ export class Controlador {
     // Los marcadores quedan con el valor final y no con el del último tic.
     this.#refrescarMarcadores();
 
-    const { correctas, milisegundos, precision, fallosPorTecla, pasadas, sinCorregir, correcciones } = this.#modelo;
+    const { correctas, milisegundos, precision, precisionPalabras, fallosPorTecla, pasadas, sinCorregir, correcciones } = this.#modelo;
     const ppm = Math.round(this.#modelo.palabrasPorMinuto);
+    const pulsaciones = Math.round(this.#modelo.pulsacionesPorMinuto);
     const record = correctas > 0 && milisegundos >= PPM_DESDE_MS && ppm > this.#mejorMarca;
     if (record) {
       this.#mejorMarca = ppm;
       guardarMejorMarca(ppm);
     }
     this.#vista.mostrarResultado({
-      ppm, correctas, segundos: milisegundos / 1000, precision, mejorMarca: this.#mejorMarca, record,
+      ppm, pulsaciones, correctas, segundos: milisegundos / 1000, precision, precisionPalabras, mejorMarca: this.#mejorMarca, record,
       fallos: fallosPorTecla, ritmo: this.#modelo.ritmo(PPM_DESDE_MS), pasadas, sinCorregir, correcciones,
     });
   }
@@ -119,9 +120,14 @@ export class Controlador {
   }
 
   #refrescarMarcadores() {
-    const { correctas, segundos, milisegundos, palabrasPorMinuto, activo, progreso } = this.#modelo;
-    const ppm = milisegundos >= PPM_DESDE_MS ? palabrasPorMinuto : null;
-    this.#vista.mostrarMarcadores({ correctas, segundos, ppm });
+    const { correctas, segundos, milisegundos, palabrasPorMinuto, pulsacionesPorMinuto, activo, progreso } = this.#modelo;
+    const enMarcha = milisegundos >= PPM_DESDE_MS;
+    this.#vista.mostrarMarcadores({
+      correctas,
+      segundos,
+      ppm: enMarcha ? palabrasPorMinuto : null,
+      pulsaciones: enMarcha ? pulsacionesPorMinuto : null,
+    });
     this.#vista.mostrarAvance(activo ? progreso : null);
   }
 }
