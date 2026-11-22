@@ -10,6 +10,7 @@
     display: block;
     inline-size: 100%;
     block-size: auto;
+    max-inline-size: 18rem; /* en móvil, de 7rem de alto como en la columna del detalle */
     overflow: visible;
   }
 
