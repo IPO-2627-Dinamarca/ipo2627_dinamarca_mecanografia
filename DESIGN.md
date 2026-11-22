@@ -180,6 +180,39 @@ tarda en corregir; lo que no se corrige es el fallo grave que hay que practicar.
 - Ventanas bajas (escritorio con menos de 45rem de alto): el detalle y el teclado de fallos juntan sus piezas a
   `--espacio-1`. Con el peor resultado (dos filas de datos, pie de la gráfica y «Para practicar» en tres líneas cada
   uno) el detalle se salía 12px a 1366 × 657; así cabe (657 / 657), y también a 1366 × 768 y 1024 × 768.
+
+### Revisión del 2026-11-22 (5): pulsaciones, dos precisiones, vocabulario y móvil
+
+- Rótulos: «ppm» pasa a significar pulsaciones por minuto, como es costumbre en mecanografía, y las palabras se
+  rotulan «palabras/min» (los dos con `abbr` que da el nombre completo). En el resultado y en la región viva van en
+  largo.
+- Pulsaciones por minuto brutas: el modelo cuenta aparte (`#teclas`) cada carácter que llega al campo y cada
+  Espacio o Intro que pasa de palabra; no cuentan Retroceso, el Espacio que no avanza ni las letras que faltaban en
+  una palabra pasada a medias. Usan el mismo tiempo, recortado al límite, que las palabras por minuto, y en vivo
+  aparecen también desde el segundo 5.
+- Marcadores: una sola línea desde 80rem; de 48 a 80rem dos filas fijas (correctas y segundos arriba, las dos
+  velocidades abajo), para que con cifras de tres dígitos nada cambie de fila a mitad de prueba; en columna
+  estrecha, dos filas de dos con la cifra sobre el nombre. La cifra baja a `--paso-2` mientras la columna central
+  mide menos de 42rem.
+- Resultado en la hoja: bajo «palabras por minuto», la cifra de pulsaciones con su unidad, apiladas sin cambiar el
+  alto fijo de la celda.
+- Dos precisiones: la real (pulsaciones correctas / pulsaciones, como antes) y la final (palabras bien o corregidas /
+  palabras pasadas; en Estricto siempre 100 %). Ocupan la primera fila del detalle con el tiempo; la mejor marca
+  sale de esa fila y pasa a una línea de texto, «Mejor marca: N palabras/min», con «(nueva)» cuando es récord.
+- Vocabulario: `palabras.json` tiene `comunes` (las 5 000 más frecuentes según FrequencyWords, sin nombres propios,
+  anglicismos de subtítulos, erratas ni vulgarismos) y `raras` (el resto del diccionario de LibreOffice, 47 588). El
+  modelo saca una rara con probabilidad 1/300.
+- Móvil (menos de 48rem) con resultado: un conmutador de dos radios, «Hoja | Detalle», con la misma tira que los
+  límites, decide con `:has(:checked)` si se ve la hoja o el detalle; la vista marca «Hoja» en cada resultado. Se
+  ocultan los marcadores, y con «Detalle» también los límites. El título del detalle queda para el lector de
+  pantalla, porque el conmutador ya lo nombra.
+- 320 × 568 sin empezar: leyendas de los límites, etiqueta del campo y ayuda ocultas a la vista (no al lector de
+  pantalla), cola a cero, título a `--paso-2` y `--respiro: 2dvh`; el inicio pasa de 894px a 536px.
+- Escritorio con menos de 45rem de alto: `--respiro` baja a `3dvh` para que el resultado peor quepa a 1366 × 657
+  con la línea de mejor marca.
+- Forced-colors: las corregidas solo con el subrayado ondulado y las sin corregir con tachado y recuadro, sin fondo
+  `Mark` en ninguna, para que se distingan por la forma; en el teclado de fallos el nivel se marca también con el
+  grosor del borde (1 a 4px) sin cambiar el tamaño del círculo.
 ---
 
 ## 1. Concepto
