@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/ritmo.css">
 
   <script type="module" src="js/main.js"></script>
 </head>
@@ -32,37 +33,78 @@
   <div class="app" data-estado="error" data-vista="app">
     <header class="cabecera">
       <h1 class="cabecera__titulo">Mecanografía</h1>
-      <p class="cabecera__lema">Teclea la palabra que aparece en la hoja. Si la completas sin fallos, suma una y sale otra.</p>
     </header>
 
     <main class="principal">
+      <fieldset class="ajustes" data-vista="ajustes" aria-describedby="ajustes-nota" disabled>
+        <legend class="ajustes__titulo">Límites de la prueba</legend>
+        <fieldset class="selector">
+          <legend class="selector__titulo">Segundos</legend>
+          <label class="selector__opcion"><input type="radio" name="segundos" value=""><span aria-hidden="true">∞</span><span class="visualmente-oculto">sin límite</span></label>
+          <label class="selector__opcion"><input type="radio" name="segundos" value="15">15</label>
+          <label class="selector__opcion"><input type="radio" name="segundos" value="30">30</label>
+          <label class="selector__opcion"><input type="radio" name="segundos" value="60" checked>60</label>
+          <label class="selector__opcion"><input type="radio" name="segundos" value="120">120</label>
+        </fieldset>
+        <fieldset class="selector">
+          <legend class="selector__titulo">Palabras</legend>
+          <label class="selector__opcion"><input type="radio" name="palabras" value="" checked><span aria-hidden="true">∞</span><span class="visualmente-oculto">sin límite</span></label>
+          <label class="selector__opcion"><input type="radio" name="palabras" value="10">10</label>
+          <label class="selector__opcion"><input type="radio" name="palabras" value="25">25</label>
+          <label class="selector__opcion"><input type="radio" name="palabras" value="50">50</label>
+          <label class="selector__opcion"><input type="radio" name="palabras" value="100">100</label>
+        </fieldset>
+        <fieldset class="selector">
+          <legend class="selector__titulo">Modo</legend>
+          <label class="selector__opcion"><input type="radio" name="modo" value="libre" checked>Libre</label>
+          <label class="selector__opcion"><input type="radio" name="modo" value="estricto">Estricto</label>
+        </fieldset>
+        <p class="ajustes__nota" id="ajustes-nota">La prueba acaba con el primero que se cumpla. Libre: Espacio pasa siempre; lo que no corrijas cuenta como fallo grave.</p>
+      </fieldset>
+
       <h2 class="visualmente-oculto">Marcadores</h2>
       <dl class="marcadores">
         <div class="marcador">
           <dt class="marcador__etiqueta">correctas</dt>
           <dd class="marcador__valor" data-vista="correctas">0</dd>
+          <dd class="marcador__tope" data-vista="tope-palabras"></dd>
         </div>
         <div class="marcador">
           <dt class="marcador__etiqueta">segundos</dt>
           <dd class="marcador__valor" data-vista="segundos">0</dd>
+          <dd class="marcador__tope" data-vista="tope-segundos"></dd>
         </div>
         <div class="marcador marcador--ritmo">
-          <dt class="marcador__etiqueta"><abbr title="palabras por minuto">ppm</abbr></dt>
+          <dt class="marcador__etiqueta"><abbr title="palabras por minuto">palabras/min</abbr></dt>
           <dd class="marcador__valor" data-vista="ppm">—</dd>
         </div>
+        <div class="marcador marcador--ritmo">
+          <dt class="marcador__etiqueta"><abbr title="pulsaciones por minuto">ppm</abbr></dt>
+          <dd class="marcador__valor" data-vista="pulsaciones">—</dd>
+        </div>
       </dl>
+
+      <fieldset class="selector vista-resultado">
+        <legend class="selector__titulo visualmente-oculto">Ver</legend>
+        <label class="selector__opcion"><input type="radio" name="vista-resultado" value="hoja" checked>Hoja</label>
+        <label class="selector__opcion"><input type="radio" name="vista-resultado" value="detalle">Detalle</label>
+      </fieldset>
 
       <section class="prueba" aria-labelledby="prueba-titulo">
         <h2 class="visualmente-oculto" id="prueba-titulo">Prueba</h2>
 
         <div class="hoja" data-vista="hoja">
           <p class="muestra" data-vista="palabra">Cargando palabras…</p>
+          <ol class="cola" role="list" data-vista="cola" aria-label="Siguientes palabras"></ol>
 
           <section class="resultado" data-vista="resultado" aria-labelledby="resultado-titulo" hidden>
             <h3 class="visualmente-oculto" id="resultado-titulo">Resultado</h3>
             <p class="resultado__principal">
               <span class="resultado__ppm" data-vista="resultado-ppm">0</span>
-              <span class="resultado__unidad">palabras por minuto</span>
+              <span class="resultado__unidades">
+                <span class="resultado__unidad">palabras por minuto</span>
+                <span class="resultado__unidad"><span class="resultado__pulsaciones" data-vista="resultado-pulsaciones">0</span> pulsaciones por minuto</span>
+              </span>
             </p>
           </section>
 
@@ -79,59 +121,67 @@
                    aria-invalid="false" disabled>
             <p class="controles__error" id="error">Palabra incompleta o con errores.</p>
           </div>
+
+          <ol class="escrita" data-vista="escrita" aria-hidden="true" hidden></ol>
         </div>
 
         <div class="mando">
           <button class="boton" type="button" data-vista="boton" aria-keyshortcuts="Enter" disabled>Iniciar</button>
           <p class="ayuda ayuda--parado">Pulsa <kbd>Intro</kbd> o el botón Iniciar para empezar.</p>
           <p class="ayuda ayuda--activo" id="ayuda-activa">
-            La palabra se acepta al completarla. <kbd>Esc</kbd> detiene la prueba.
+            Pulsa <kbd>Espacio</kbd> al acabar cada palabra. <kbd>Esc</kbd> detiene la prueba.
           </p>
         </div>
+      </section>
 
-        <section class="informe" data-vista="informe" aria-labelledby="informe-titulo" hidden>
-          <h3 class="informe__titulo" id="informe-titulo">Detalle de la prueba</h3>
-          <dl class="informe__datos">
-            <div class="marcador">
-              <dt class="marcador__etiqueta">tiempo</dt>
-              <dd class="marcador__valor" data-vista="resultado-tiempo">0 s</dd>
-            </div>
-            <div class="marcador">
-              <dt class="marcador__etiqueta">precisión</dt>
-              <dd class="marcador__valor" data-vista="resultado-precision">—</dd>
-            </div>
-            <div class="marcador">
-              <dt class="marcador__etiqueta">mejor marca</dt>
-              <dd class="marcador__valor" data-vista="resultado-marca">—</dd>
-            </div>
-          </dl>
-          <p class="informe__record" data-vista="resultado-record" hidden>Nueva mejor marca.</p>
+      <section class="informe" data-vista="informe" aria-labelledby="informe-titulo" hidden>
+        <h2 class="informe__titulo" id="informe-titulo">Detalle de la prueba</h2>
+        <dl class="informe__datos">
+          <div class="marcador">
+            <dt class="marcador__etiqueta">tiempo</dt>
+            <dd class="marcador__valor" data-vista="resultado-tiempo">0 s</dd>
+          </div>
+          <div class="marcador">
+            <dt class="marcador__etiqueta">precisión real</dt>
+            <dd class="marcador__valor" data-vista="resultado-precision">—</dd>
+          </div>
+          <div class="marcador">
+            <dt class="marcador__etiqueta">precisión final</dt>
+            <dd class="marcador__valor" data-vista="resultado-precision-final">—</dd>
+          </div>
+        </dl>
+        <dl class="informe__datos informe__datos--errores">
+          <div class="marcador">
+            <dt class="marcador__etiqueta">corregidos</dt>
+            <dd class="marcador__valor" data-vista="resultado-corregidos">0</dd>
+          </div>
+          <div class="marcador">
+            <dt class="marcador__etiqueta">por corrección</dt>
+            <dd class="marcador__valor" data-vista="resultado-correccion">—</dd>
+          </div>
+          <div class="marcador">
+            <dt class="marcador__etiqueta">sin corregir</dt>
+            <dd class="marcador__valor" data-vista="resultado-sin-corregir">0</dd>
+          </div>
+        </dl>
+        <p class="informe__marca">Mejor marca: <span class="informe__valor" data-vista="resultado-marca">—</span>
+          <span class="informe__record" data-vista="resultado-record" hidden>(nueva)</span></p>
 
-          <figure class="fallos">
-            <figcaption class="fallos__resumen" data-vista="fallos-resumen"></figcaption>
-            <div class="teclado" data-vista="teclado" aria-hidden="true"></div>
-          </figure>
-        </section>
+        <figure class="ritmo">
+          <svg class="ritmo__grafica" data-vista="ritmo" viewBox="0 0 288 112" aria-hidden="true" focusable="false"></svg>
+          <figcaption class="ritmo__resumen" data-vista="ritmo-resumen"></figcaption>
+        </figure>
+
+        <p class="informe__practicar" data-vista="practicar" hidden></p>
+
+        <figure class="fallos">
+          <figcaption class="fallos__resumen" data-vista="fallos-resumen"></figcaption>
+          <div class="teclado" data-vista="teclado" aria-hidden="true"></div>
+        </figure>
       </section>
 
       <p class="visualmente-oculto" data-vista="anuncio" aria-live="polite"></p>
     </main>
-
-    <aside class="lamina" aria-label="La máquina">
-      <figure class="lamina__figura">
-        <img class="lamina__foto" src="img/hispano-olivetti-m40.jpg" width="1280" height="1009" decoding="async"
-             alt="Máquina de escribir Hispano Olivetti M40 vista de frente, con teclas redondas y la ñ en la fila central del teclado.">
-        <figcaption class="lamina__credito">
-          Hispano Olivetti M40, fabricada en España en la década de 1930 según su ficha. Foto de Amfeli,
-          <a href="https://commons.wikimedia.org/wiki/File:M%C3%A1quina_de_escribir_Hispano_Olivetti_M40.jpg">Wikimedia Commons</a>,
-          <a href="https://creativecommons.org/licenses/by/4.0/deed.es">CC BY 4.0</a>; reducida y en escala de grises.
-        </figcaption>
-      </figure>
-    </aside>
-
-    <footer class="pie">
-      <p>Grupo Dinamarca · IPO 2026/27</p>
-    </footer>
   </div>
 </body>
 </html>

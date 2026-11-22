@@ -4,6 +4,215 @@ Dirección de arte de la práctica de Mecanografía (IPO 2026/27, grupo Dinamarc
 estilo por defecto; por encima de él solo está el enunciado del profesor (`Mecanografía/README.md`). Todo lo que
 aquí se pide es implementable con HTML, CSS y JS nativos, sin librerías, sin CDN y sin fuentes descargadas.
 
+## 0. Revisión del 2026-11-21: ritmo continuo
+
+Cambios pedidos después del rediseño. Donde chocan con las secciones de abajo, mandan estos; el resto del
+documento sigue vigente.
+
+- **Sin foto.** Se retiran la lámina, la foto de la M40 y su crédito (secciones 4.1, 4.2, 5.9 y 6, y las filas
+  de la lámina en 8 y 9). La página es una sola columna de 44rem como máximo, centrada y anclada arriba, en todos
+  los anchos: cabecera, límites, marcadores, hoja, mando, detalle y pie. Desaparecen la rejilla de dos columnas de
+  la sección 3.3 y los tokens `--espacio-6` y `--ancho-maximo`. El lema pasa de 34ch a `--medida` para ocupar
+  dos líneas y no cuatro.
+- **Espacio entre palabras.** Una palabra completa ya no se acepta sola: hay que pulsar Espacio (o Intro), como
+  en un texto. Si está incompleta o tiene errores, se marca igual que antes y no avanza. El Espacio que cierra una
+  palabra correcta cuenta como pulsación acertada.
+- **Cola de palabras.** Debajo de la palabra en curso, en la celda nueva `cola` de la hoja (áreas
+  `linea / cola / controles`), van las tres siguientes en una `<ol class="cola">`, en la fuente de la hoja, color
+  `--guia` y tamaños `--paso-3`, `--paso-2` y `--paso-1` (limitados para que 12 letras quepan a 320 px). La cola
+  tiene alto fijo y se oculta con `visibility` fuera de la prueba, así que el campo sigue sin moverse. Al acertar,
+  la palabra y la cola suben 0,6em desde abajo y la nueva entra con un fundido (`--avance: 160ms`, solo con
+  `prefers-reduced-motion: no-preference`). En modo compacto solo queda la primera de la cola. Esto relaja la
+  regla de la sección 1.3: las letras siguen sin moverse mientras se escribe, pero la hoja sube una línea en
+  cada acierto, como el papel en el rodillo.
+- **Mayúsculas.** Una de cada cinco palabras sale con la inicial en mayúscula y ahora se exigen las mayúsculas.
+  Los fallos de solo mayúscula (en un sentido o en el otro) se apuntan a una tecla nueva, `⇧`, que abre la
+  tercera fila del teclado de fallos (`'⇧zxcvbnm'`, 29 teclas). Ocupa las medias columnas 1 y 2, de modo que la Z
+  sigue en la 3 y ya no hace falta colocar a mano el primer elemento de esa fila. En el resumen se llama
+  "mayúsculas".
+- **Límites.** Encima de los marcadores va `<fieldset class="ajustes">` con dos grupos de radios dentro de
+  `<label>`: Segundos (∞, 15, 30, 60, 120; 60 por defecto) y Palabras (∞, 10, 25, 50, 100; ∞ por defecto). Se
+  dibujan como el botón de tinta (borde de 2px, el elegido relleno de `--tinta`, foco con `:has(:focus-visible)`,
+  deshabilitados con borde `--borde` durante la prueba) y en `forced-colors` el elegido toma `Highlight`. Por
+  debajo de 30rem cada grupo ocupa su línea con los botones repartidos a todo el ancho. La prueba acaba con el
+  primer límite que se cumpla; si es el de tiempo, dura exactamente ese tiempo. Los marcadores muestran el tope en
+  un `dd` aparte, en `--tinta-suave`: "12 de 25 correctas".
+- **Almacén.** `palabras.json` pasa de 100 palabras a 50 436, sacadas del diccionario de LibreOffice (de 2 a 12
+  letras, sin nombres propios ni siglas). Al haber palabras de hasta 12 letras, el cuerpo de la hoja sigue
+  saliendo de `--letras`, que ahora puede llegar a 12, y su mínimo baja de 2rem a 1,75rem para que una palabra de 12
+  letras quepa entera a 320 px.
+
+### Revisión del 2026-11-21 (2): pantalla única
+
+En un ordenador todo tiene que verse sin desplazarse, en los tres estados (inicio, prueba con error y resultado
+con el teclado de fallos). Esto sustituye la columna única de 44rem del punto «Sin foto» de arriba.
+
+- Cabecera: solo el título, centrado. Se quitan el lema (`.cabecera__lema`) y el pie (`.pie`) con sus reglas. El
+  título crece a `min(clamp(var(--paso-4), 1.25rem + 3.5vw, 4.5rem), 10dvh)` y el token `--paso-5`, que solo
+  usaba el título, desaparece.
+- Rejilla de `.principal` en escritorio (desde 64rem): columnas
+  `minmax(var(--ancho-ajustes), var(--ancho-detalle)) minmax(30rem, var(--ancho-columna)) var(--ancho-detalle)`,
+  con los tokens nuevos `--ancho-ajustes: 11rem` y `--ancho-detalle: 18rem`, y áreas
+  `". marcadores ." / "ajustes prueba informe"`. Con sitio las dos laterales miden 18rem y la hoja queda centrada
+  bajo el título. Los límites se apilan en su columna (su disposición cambió en la revisión 3).
+- Detalle: `section.informe` sale de `.prueba` y pasa a ser hermana en la rejilla, después de ella, con título
+  `h2`. Su columna está reservada siempre y el detalle ocupa solo la fila de la hoja, así que su alto no puede
+  empujar la hoja ni el botón (`align-items: start` en `.principal`). Las teclas del teclado de fallos se juntan
+  a 0,125rem en horizontal para ganar tamaño en 18rem.
+- Tableta (48 a 64rem): límites en una fila arriba, marcadores, y la hoja con el detalle a su derecha.
+- Móvil (menos de 48rem): una columna en el orden del DOM. A 390px el nombre de cada grupo de límites va delante
+  de sus botones (ancho común de 5,25rem para alinearlos) y la ayuda va junto al botón; ambas cosas se apilan
+  solo por debajo de 20rem. El margen lateral de la hoja baja a 1rem por debajo de 30rem. El detalle queda debajo
+  del botón: a esa anchura no hay otro sitio.
+- Topes por alto: `--respiro: min(var(--espacio-5), 4dvh)` para el margen exterior, el hueco bajo el título y el
+  margen superior de la hoja; `--cuerpo-max: min(5.5rem, 10dvh)` (y `min(4.5rem, 7.5dvh)` en columna estrecha),
+  del que dependen el alto de la celda de la palabra, el del campo y los huecos de la hoja.
+- El modo compacto (`height < 34rem`, prueba en marcha) sigue igual, sin la regla del pie.
+
+Medidas con Chromium: alto que ocupa el contenido / alto de la ventana. `scrollHeight` coincide con la ventana
+en todos los casos de escritorio y no hay desplazamiento horizontal en ninguno. El campo y el botón están en la
+misma posición en los tres estados en todos los tamaños.
+
+| Ventana | Inicio | Prueba con error | Resultado |
+|---|---|---|---|
+| 1920 × 1080 | 790 / 1080 | 790 / 1080 | 790 / 1080 |
+| 1440 × 900 | 760 / 900 | 760 / 900 | 760 / 900 |
+| 1366 × 768 | 704 / 768 | 704 / 768 | 704 / 768 |
+| 1366 × 657 (portátil con barras del navegador) | 652 / 657 | 652 / 657 | 652 / 657 |
+| 1280 × 720 | 680 / 720 | 680 / 720 | 680 / 720 |
+| 1024 × 768 | 692 / 768 | 692 / 768 | 692 / 768 |
+| 800 × 1000 | 797 / 1000 | 797 / 1000 | 797 / 1000 |
+| 390 × 844 | 810 / 844 | 810 / 844 | 1126 / 844 (detalle debajo) |
+| 320 × 568 | 835 / 568 | 835 / 568 | 1174 / 568 |
+
+Antes de este cambio, a 1366 × 768 la página medía 1001px al empezar y 1358px con el resultado. A 320 × 568 no
+cabe: la hoja y el botón ya ocupan más que la ventana, y al escribir el navegador desplaza la página hasta el
+campo.
+
+### Revisión del 2026-11-22 (3): propuesta visual
+
+Mejoras elegidas por el usuario a partir de una propuesta de dirección de arte y de un estudio de cómo muestran el
+texto, el cursor, el progreso y el resultado los test de mecanografía más conocidos. Se han tomado patrones de
+interacción, no el aspecto de ninguno.
+
+- Título: system-ui en `--peso-normal`, `letter-spacing: -0.02em` y `min(clamp(2rem, 1.5rem + 3vw, 4.25rem), 8dvh)`.
+  No pasa del 80 % del cuerpo de la palabra (61px frente a 77px a 1366 × 768): domina la palabra, como pide la
+  sección 2.
+- Botón: `min-inline-size: 9rem`, el ancho de «■ Detener». Antes «Iniciar» medía 16px menos y la ayuda saltaba.
+- Campo: `outline-offset: 0` con foco, para que el anillo y el borde inferior se vean como una sola línea.
+- Modo compacto: empieza por debajo de 36rem de alto (antes 34rem); así la prueba cabe a 320 × 568.
+- Rodillo de progreso: con una prueba con límite en marcha, la vista escribe `--progreso` (0 a 1) en `.hoja`. El
+  modelo lo calcula como el mayor avance de los límites que existan, así que la barra llega al final justo cuando
+  acaba la prueba. `.hoja::before` pinta la tinta con `linear-gradient` de corte duro y `background-size`
+  proporcional sobre una pista `color-mix(in hsl, var(--tinta) 30%, var(--mesa))` (tinta frente a pista 7,05 en
+  claro y 6,40 en oscuro). Transición lineal de 200ms solo sin movimiento reducido; en `forced-colors`,
+  `CanvasText` sobre `GrayText`. Los segundos transcurridos siguen en los marcadores, como pide el enunciado.
+- Límites: `.ajustes` es contenedor; la leyenda «Límites de la prueba» se ve, con el estilo y la altura de
+  «Detalle de la prueba»; debajo, la nota «La prueba acaba con el primero que se cumpla.» (`aria-describedby`).
+  Por debajo de 48rem leyenda y nota se ocultan a la vista, pero no al lector de pantalla. Cada grupo es una tira
+  con un solo borde de 2px, separadores de 1px y radio solo en los extremos (región común). Bloqueados: borde
+  discontinuo y el elegido relleno de `--tinta-suave` (7,7:1 con el texto en los dos modos).
+- Marcadores entre 64 y 80rem: las PPM van siempre en una segunda línea, porque con topes de tres cifras los tres
+  marcadores no caben en la columna central (554px frente a 480px a 1024) y partirse a mitad de prueba bajaba la
+  hoja 41px.
+- Cursor deslizante: la vista escribe `--cursor` (caracteres tecleados) en `.muestra` y `.muestra::after` dibuja
+  un subrayado de 1ch desplazado `calc(var(--cursor) * 1ch)`, con transición de 100ms. Sustituye al subrayado de
+  `.letra--cursor`, que desaparece. El divisor del cuerpo pasa a `var(--letras) + 1` para que el cursor quepa tras
+  la última letra.
+- Cola que se aleja: la 2.ª y la 3.ª palabra al 80 % y al 72 % de `--guia` sobre el papel (3,56 y 3,07 en claro;
+  4,12 y 3,6 en oscuro; son texto grande en negrita). Con `prefers-contrast: more`, las tres en `--tinta-suave`.
+- Modo foco: con la prueba en marcha, título y límites a opacidad 0,5 (el título conserva 3,15:1). No se aplica
+  con `prefers-contrast: more` ni en `forced-colors`.
+- Detalle compacto: tiempo, precisión y mejor marca en una fila de tres columnas, cifra a `--paso-1` sobre el
+  nombre (a `--paso-2` o mayor no caben en 18rem con sus unidades). Orden: datos, ritmo, teclado de fallos. En
+  `forced-colors` las cuentas de las teclas se ocultan si el teclado es estrecho: no caben en el círculo y las da
+  el resumen.
+- Gráfica de ritmo (`figure.ritmo`, estilos en `css/ritmo.css`): una sola serie, la PPM media acumulada en cada
+  segundo desde el quinto (el mismo umbral que las PPM en vivo), con el último punto en el instante final para que
+  coincida con la cifra grande. Una media móvil daría escalones de 12 ppm con una palabra cada uno o dos segundos.
+  Los fallos son marcas de 2px en `--cinta` bajo el eje, sin segundo eje. Una línea de referencia en el máximo
+  redondeado a decenas, eje en `--borde`, textos en `--tinta-suave` a `--paso--1`, línea de 2px en `--tinta` con
+  punto final etiquetado. `viewBox` de 288 × 112, `vector-effect: non-scaling-stroke`. El SVG lleva `aria-hidden`
+  y el `figcaption` visible lo resume en texto; con menos de 10s no se dibuja.
+- Hoja escrita (`ol.escrita`): al terminar, en las celdas de la cola y del campo, las palabras aceptadas en Courier
+  negrita a `--paso-1` y en `--tinta`; las que tuvieron fallos con el subrayado ondulado de `.letra--error`. Ocupa
+  esas celdas con `contain: size`, así que no cambia el alto de la hoja, y lo que no cabe se recorta con un
+  desvanecido de una línea (`mask-image`). Lleva `aria-hidden`; el anuncio final nombra las palabras con fallos.
+
+Medidas con Chromium tras esta revisión (alto del contenido / alto de la ventana; sin desplazamiento horizontal en
+ninguno). El campo y el botón están en la misma posición y con el mismo tamaño en los tres estados.
+
+| Ventana | Inicio | Prueba con error | Resultado con gráfica |
+|---|---|---|---|
+| 1920 × 1080 | 786 | 786 | 786 |
+| 1440 × 900 | 756 | 756 | 756 |
+| 1366 × 768 | 698 | 698 | 698 |
+| 1366 × 657 | 639 | 639 | 639 |
+| 1280 × 720 | 672 | 672 | 672 |
+| 1024 × 768 | 732 | 732 | 732 |
+| 390 × 844 | 823 | 823 | 1165 (detalle debajo) |
+| 320 × 568 | 845 | 507 (compacto) | 1194 |
+
+### Revisión del 2026-11-22 (4): modo libre y correcciones
+
+Pedido por el usuario: poder pasar de palabra aunque esté mal, para ver qué se falla, qué se corrige y cuánto se
+tarda en corregir; lo que no se corrige es el fallo grave que hay que practicar.
+
+- Modo: tercer grupo de la columna de límites, «Modo», con Libre (por defecto) y Estricto, misma tira que los
+  otros (`input[name="modo"]`). La nota suma una frase: «Libre: Espacio pasa siempre; lo que no corrijas cuenta como
+  fallo grave.» Estricto conserva el comportamiento que pide el enunciado al pie de la letra.
+- Reglas (en el modelo): un error empieza cuando lo escrito deja de ser principio de la palabra y se corrige cuando
+  vuelve a serlo; se guarda esa duración. En Libre, pasar una palabra mal o incompleta la deja `sinCorregir`, no
+  suma a correctas y cada letra que faltaba cuenta como pulsación fallada en su tecla. Las PPM, la gráfica y la mejor
+  marca solo cuentan palabras bien escritas.
+- Detalle: segunda fila con la misma maqueta que la primera: «corregidos», «por corrección» (media con una décima)
+  y «sin corregir», cuya cifra pasa a `--cinta` si es mayor que 0 (`[data-cuenta]:not([data-cuenta="0"])`).
+  Debajo de la gráfica, `p.informe__practicar` con las palabras sin corregir en la fuente de la hoja. Para que todo
+  quepa en 18rem, los nombres de los datos, los resúmenes y esa línea bajan a `--paso--1` en escritorio.
+- Hoja escrita en tres niveles: bien (tinta), `--corregida` (el subrayado ondulado de antes, que sustituye a
+  `--fallo`) y `--sin-corregir`, con `<del class="escrita__escrito">` tachado grueso en `--cinta` y
+  `<ins class="escrita__pedida">` en tinta sobre `--tinte-cinta` con recuadro fino (5,95:1 y 14,86:1 en claro;
+  5,21:1 y 12,75:1 en oscuro). La diferencia no depende del color: tachado y recuadro frente a subrayado.
+- Gráfica: `path.ritmo__sin-corregir`, marcas de 14 unidades del `viewBox` y trazo de 4px en `--cinta` (5px en
+  `Mark` con `forced-colors`), frente a las de 6 unidades de cada pulsación fallada.
+- Móvil: con tres grupos de límites, a 390 × 844 el cuerpo máximo de la palabra en columna estrecha baja a `7dvh` y
+  se recogen los huecos para que inicio y prueba sigan cabiendo.
+- Ventanas bajas (escritorio con menos de 45rem de alto): el detalle y el teclado de fallos juntan sus piezas a
+  `--espacio-1`. Con el peor resultado (dos filas de datos, pie de la gráfica y «Para practicar» en tres líneas cada
+  uno) el detalle se salía 12px a 1366 × 657; así cabe (657 / 657), y también a 1366 × 768 y 1024 × 768.
+
+### Revisión del 2026-11-22 (5): pulsaciones, dos precisiones, vocabulario y móvil
+
+- Rótulos: «ppm» pasa a significar pulsaciones por minuto, como es costumbre en mecanografía, y las palabras se
+  rotulan «palabras/min» (los dos con `abbr` que da el nombre completo). En el resultado y en la región viva van en
+  largo.
+- Pulsaciones por minuto brutas: el modelo cuenta aparte (`#teclas`) cada carácter que llega al campo y cada
+  Espacio o Intro que pasa de palabra; no cuentan Retroceso, el Espacio que no avanza ni las letras que faltaban en
+  una palabra pasada a medias. Usan el mismo tiempo, recortado al límite, que las palabras por minuto, y en vivo
+  aparecen también desde el segundo 5.
+- Marcadores: una sola línea desde 80rem; de 48 a 80rem dos filas fijas (correctas y segundos arriba, las dos
+  velocidades abajo), para que con cifras de tres dígitos nada cambie de fila a mitad de prueba; en columna
+  estrecha, dos filas de dos con la cifra sobre el nombre. La cifra baja a `--paso-2` mientras la columna central
+  mide menos de 42rem.
+- Resultado en la hoja: bajo «palabras por minuto», la cifra de pulsaciones con su unidad, apiladas sin cambiar el
+  alto fijo de la celda.
+- Dos precisiones: la real (pulsaciones correctas / pulsaciones, como antes) y la final (palabras bien o corregidas /
+  palabras pasadas; en Estricto siempre 100 %). Ocupan la primera fila del detalle con el tiempo; la mejor marca
+  sale de esa fila y pasa a una línea de texto, «Mejor marca: N palabras/min», con «(nueva)» cuando es récord.
+- Vocabulario: `palabras.json` tiene `comunes` (las 5 000 más frecuentes según FrequencyWords, sin nombres propios,
+  anglicismos de subtítulos, erratas ni vulgarismos) y `raras` (el resto del diccionario de LibreOffice, 47 588). El
+  modelo saca una rara con probabilidad 1/300.
+- Móvil (menos de 48rem) con resultado: un conmutador de dos radios, «Hoja | Detalle», con la misma tira que los
+  límites, decide con `:has(:checked)` si se ve la hoja o el detalle; la vista marca «Hoja» en cada resultado. Se
+  ocultan los marcadores, y con «Detalle» también los límites. El título del detalle queda para el lector de
+  pantalla, porque el conmutador ya lo nombra.
+- 320 × 568 sin empezar: leyendas de los límites, etiqueta del campo y ayuda ocultas a la vista (no al lector de
+  pantalla), cola a cero, título a `--paso-2` y `--respiro: 2dvh`; el inicio pasa de 894px a 536px.
+- Escritorio con menos de 45rem de alto: `--respiro` baja a `3dvh` para que el resultado peor quepa a 1366 × 657
+  con la línea de mejor marca.
+- Forced-colors: las corregidas solo con el subrayado ondulado y las sin corregir con tachado y recuadro, sin fondo
+  `Mark` en ninguna, para que se distingan por la forma; en el teclado de fallos el nivel se marca también con el
+  grosor del borde (1 a 4px) sin cambiar el tamaño del círculo.
 ---
 
 ## 1. Concepto

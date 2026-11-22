@@ -1,62 +1,181 @@
 @layer layout {
-  /* Una columna anclada arriba; la lámina va después de la prueba en el DOM y en pantalla */
+  /* El título centrado arriba y debajo la mesa de trabajo, anclada arriba */
   .app {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "cabecera"
-      "principal"
-      "lamina"
-      "pie";
+      "principal";
     align-content: start;
-    gap: var(--espacio-5);
+    gap: var(--respiro);
     min-block-size: 100dvh;
-    padding-block: var(--espacio-5);
-    padding-inline: max(var(--espacio-3), (100% - var(--ancho-columna)) / 2);
+    padding-block: var(--respiro);
+    padding-inline: var(--espacio-3);
   }
-
-  /* Escritorio: dos columnas desiguales, la máquina a la izquierda y la hoja a la derecha */
-  @media (width >= 60rem) {
-    .app {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      grid-template-rows: auto 1fr auto;
-      grid-template-areas:
-        "cabecera principal"
-        "lamina   principal"
-        "pie      pie";
-      column-gap: var(--espacio-6);
-      padding-inline: max(var(--espacio-5), (100% - var(--ancho-maximo)) / 2);
-    }
-
-    .principal,
-    .lamina {
-      align-self: start;
-    }
-  }
-
-  .cabecera { grid-area: cabecera; }
-  .principal { grid-area: principal; }
-  .lamina { grid-area: lamina; }
-  .pie { grid-area: pie; }
 
   .cabecera {
-    display: grid;
-    gap: var(--espacio-3);
+    grid-area: cabecera;
+    text-align: center;
   }
 
-  /* Contenedor de consulta: el mando se apila cuando la columna es estrecha */
+  .principal { grid-area: principal; }
+  .ajustes { grid-area: ajustes; }
+  .marcadores { grid-area: marcadores; }
+  .prueba { grid-area: prueba; }
+  .informe { grid-area: informe; }
+
+  /* El conmutador Hoja / Detalle solo existe en móvil y con el resultado a la vista */
+  .selector.vista-resultado {
+    grid-area: vista;
+    display: none;
+  }
+
+  /* Contenedor de consulta: el mando se apila cuando la columna es estrecha.
+     Móvil: una columna en el orden del DOM. */
   .principal {
     container: principal / inline-size;
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "ajustes"
+      "marcadores"
+      "prueba"
+      "informe";
+    align-items: start;
     gap: var(--espacio-3);
   }
 
-  .marcadores,
-  .informe__datos {
+  /* Tableta: límites en una fila arriba y el detalle a la derecha de la hoja.
+     El detalle va solo en la fila de la prueba para que su alto no desplace la hoja. */
+  @media (width >= 48rem) {
+    .principal {
+      grid-template-columns: minmax(0, 1fr) var(--ancho-detalle);
+      grid-template-areas:
+        "ajustes ajustes"
+        "marcadores ."
+        "prueba informe";
+      column-gap: var(--espacio-4);
+    }
+  }
+
+  /* Escritorio: límites a la izquierda, hoja en el centro y detalle a la derecha, siempre reservado.
+     Con sitio, las dos columnas laterales miden lo mismo y la hoja queda centrada bajo el título. */
+  @media (width >= 64rem) {
+    .principal {
+      grid-template-columns:
+        minmax(var(--ancho-ajustes), var(--ancho-detalle))
+        minmax(30rem, var(--ancho-columna))
+        var(--ancho-detalle);
+      grid-template-areas:
+        ". marcadores ."
+        "ajustes prueba informe";
+      justify-content: center;
+    }
+  }
+
+  /* Límites: los dos grupos en una fila que se parte si no cabe y la nota debajo.
+     Es contenedor propio: su ancho decide si cada grupo lleva el título delante o encima. */
+  .ajustes {
+    container: ajustes / inline-size;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-2) var(--espacio-5);
+  }
+
+  .ajustes__nota {
+    flex-basis: 100%;
+  }
+
+  /* Con float la leyenda deja de ir en el borde y se coloca como un elemento más de la fila */
+  .selector {
+    display: flex;
+    align-items: center;
+  }
+
+  /* Ancho común para que los botones de los dos grupos empiecen a la misma altura */
+  .selector__titulo {
+    float: inline-start;
+    min-inline-size: 5.25rem;
+    margin-inline-end: var(--espacio-2);
+  }
+
+  .selector__opcion {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+  }
+
+  /* En la columna lateral: los dos grupos apilados */
+  @media (width >= 64rem) {
+    .ajustes {
+      display: grid;
+      gap: var(--espacio-4);
+    }
+  }
+
+  /* Columna estrecha (la lateral del escritorio o el móvil): cada grupo en su línea, con el título encima
+     y los botones en una tira a todo el ancho */
+  @container ajustes (inline-size < 20rem) {
+    .selector {
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+    }
+
+    .selector__titulo {
+      flex-basis: 100%;
+      margin-block-end: var(--espacio-1);
+    }
+
+    .selector__opcion {
+      flex: 1;
+    }
+  }
+
+  .marcadores {
+    container: marcadores / inline-size;
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: var(--espacio-2) var(--espacio-5);
+  }
+
+  /* Con la columna central en su mínimo no caben los cuatro con topes de tres cifras en una línea: dos filas fijas,
+     correctas y segundos arriba; palabras/min y ppm abajo. Así no se parte nada a mitad de prueba. */
+  @media (48rem <= width < 80rem) {
+    .marcadores {
+      display: grid;
+      grid-template-columns: repeat(2, auto);
+      justify-content: space-between;
+    }
+
+    .marcadores > :nth-child(even) {
+      justify-self: end;
+    }
+
+    .marcadores > .marcador--ritmo {
+      margin-inline-start: 0;
+    }
+  }
+
+  /* Escritorio ancho: los cuatro en una línea; los dos de ritmo juntos al final */
+  @media (width >= 80rem) {
+    .marcadores {
+      column-gap: var(--espacio-3);
+    }
+
+    @container marcadores (inline-size < 42rem) {
+      .marcadores {
+        column-gap: 0.75rem;
+      }
+    }
+  }
+
+  /* Detalle: los tres datos en una fila, con la cifra encima del nombre; cada columna mide lo que su dato */
+  .informe__datos {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    justify-content: space-between;
+    gap: var(--espacio-2);
   }
 
   .marcador {
@@ -65,19 +184,52 @@
     gap: 0.35em;
   }
 
-  /* Cifra delante y nombre detrás; el lector de pantalla sigue el orden del DOM (dt, dd) */
-  .marcador__valor {
+  /* Cifra y tope delante y nombre detrás; el lector de pantalla sigue el orden del DOM (dt, dd) */
+  .marcador__valor,
+  .marcador__tope {
     order: -1;
+  }
+
+  .informe__datos .marcador {
+    flex-direction: column;
+    align-items: start;
+    gap: 0;
   }
 
   .marcador--ritmo {
     margin-inline-start: auto;
   }
 
-  /* Columna estrecha: correctas en una línea; segundos y ppm en la siguiente, a los dos extremos */
+  .marcador--ritmo + .marcador--ritmo {
+    margin-inline-start: 0;
+  }
+
+  /* Columna estrecha: cuatro marcadores en dos filas de dos, cada uno con la cifra y el tope sobre el nombre */
   @container principal (inline-size < 30rem) {
-    .marcadores > :first-child {
-      flex-basis: 100%;
+    .marcadores {
+      display: grid;
+      grid-template-columns: repeat(2, auto);
+      justify-content: space-between;
+      gap: var(--espacio-1) var(--espacio-3);
+    }
+
+    .marcadores > :nth-child(even) {
+      justify-self: end;
+    }
+
+    .marcadores > .marcador--ritmo {
+      margin-inline-start: 0;
+    }
+
+    .marcadores .marcador {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: baseline;
+      gap: 0 0.35em;
+    }
+
+    .marcadores .marcador__etiqueta {
+      grid-column: 1 / -1;
     }
   }
 
@@ -94,17 +246,58 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "linea"
+      "cola"
       "controles";
     /* Proporcional al cuerpo: deja sitio al subrayado ondulado de la letra errónea */
     gap: calc(var(--cuerpo-max) * 0.2);
-    --cuerpo-max: 5.5rem;
-    /* La palabra ocupa el 93 % del ancho útil de la muestra (avance de 0,6 em por letra) */
-    --cuerpo: clamp(2rem, calc((100cqi - 2 * var(--sangria)) * 1.55 / var(--letras, 8)), var(--cuerpo-max));
+    --cuerpo-max: min(5.5rem, 10dvh);
+    /* La palabra y el cursor tras ella ocupan el 93 % del ancho útil de la muestra (avance de 0,6 em por letra) */
+    --cuerpo: clamp(1.75rem, calc((100cqi - 2 * var(--sangria)) * 1.55 / (var(--letras, 8) + 1)), var(--cuerpo-max));
   }
 
   @container principal (inline-size < 30rem) {
     .hoja {
-      --cuerpo-max: 4.5rem;
+      --cuerpo-max: min(4.5rem, 7dvh);
+    }
+  }
+
+  /* Móvil con el resultado: la hoja y el detalle no caben a la vez; un conmutador de CSS puro (:has) elige uno
+     y el detalle ocupa el sitio de la hoja, entre el conmutador y el botón */
+  @media (width < 48rem) {
+    .principal:has(.informe:not([hidden])) {
+      grid-template-areas:
+        "ajustes"
+        "marcadores"
+        "vista"
+        "informe"
+        "prueba";
+
+      & .selector.vista-resultado {
+        display: flex;
+      }
+
+      /* Los marcadores repiten lo que ya está en la hoja y el detalle; con el detalle a la vista tampoco
+         se ofrecen los límites, que vuelven con «Hoja» */
+      & .marcadores,
+      &:has([value="detalle"]:checked) .ajustes {
+        display: none;
+      }
+
+      &:not(:has([value="detalle"]:checked)) .informe,
+      &:has([value="detalle"]:checked) .hoja {
+        display: none;
+      }
+    }
+  }
+
+  /* Móvil: con tres grupos de límites, los huecos se recogen para que inicio y prueba quepan a 390 × 844 */
+  @media (width < 48rem) {
+    .principal {
+      gap: var(--espacio-2);
+    }
+
+    .ajustes {
+      row-gap: var(--espacio-1);
     }
   }
 
@@ -121,8 +314,33 @@
     block-size: calc(var(--cuerpo-max) * 1.15);
   }
 
+  /* Referencia del cursor, que se coloca desde la sangría */
+  .muestra {
+    position: relative;
+  }
+
   .aviso {
     min-block-size: calc(var(--cuerpo-max) * 1.15);
+  }
+
+  /* Las siguientes palabras, de mayor a menor, en un alto fijo */
+  .cola {
+    grid-area: cola;
+    display: grid;
+    align-content: start;
+    block-size: calc((var(--paso-3) + var(--paso-2) + var(--paso-1)) * 1.2);
+  }
+
+  /* En el resultado, la hoja escrita ocupa el hueco de la cola y del campo. Con contain: size no aporta
+     alto a esas filas: la hoja mide lo mismo que en la prueba y lo que no cabe se recorta. */
+  .escrita {
+    grid-row: cola-start / controles-end;
+    grid-column: 1;
+    contain: size;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: start;
+    gap: 0 1ch;
   }
 
   /* La unidad puede partirse; su última línea se apoya en la línea base de la cifra */
@@ -155,7 +373,9 @@
     .teclado {
       column-gap: 0.125rem;
     }
+  }
 
+  @container principal (inline-size < 20rem) {
     .mando {
       grid-template-columns: 1fr;
       grid-template-areas:
@@ -171,15 +391,37 @@
     gap: var(--espacio-2);
   }
 
+  /* Juntas las piezas del detalle: en móvil ocupa el sitio de la hoja y en su columna tiene el alto justo */
   .informe {
     display: grid;
-    gap: var(--espacio-4);
-    margin-block-start: var(--espacio-5);
+    gap: var(--espacio-2);
+  }
+
+  /* En su columna, las teclas aprovechan el ancho */
+  @media (width >= 48rem) {
+    .teclado {
+      column-gap: 0.125rem;
+    }
+  }
+
+  /* Ventanas bajas: el margen exterior baja de 4dvh a 3dvh para que el detalle completo quepa a 1366 × 657 */
+  @media (width >= 64rem) and (height < 45rem) {
+    .app {
+      --respiro: min(var(--espacio-5), 3dvh);
+    }
+  }
+
+  /* Ventanas bajas: el detalle completo (dos filas, gráfica con su pie, practicar y teclado) junta sus piezas */
+  @media (width >= 64rem) and (height < 45rem) {
+    .informe,
+    .fallos {
+      gap: var(--espacio-1);
+    }
   }
 
   .fallos {
     display: grid;
-    gap: var(--espacio-3);
+    gap: var(--espacio-2);
   }
 
   /* 23 medias teclas: cada tecla ocupa dos y las filas se escalonan media tecla y una tecla */
@@ -205,6 +447,6 @@
     aspect-ratio: 1;
   }
 
+  /* La fila de en medio entra media tecla; en la de abajo, ⇧ ocupa dos medias columnas y la z queda en la tercera */
   .teclado__fila:nth-child(2) > :first-child { grid-column: 2 / span 2; }
-  .teclado__fila:nth-child(3) > :first-child { grid-column: 3 / span 2; }
 }

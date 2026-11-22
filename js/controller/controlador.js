@@ -25,7 +25,7 @@ export class Controlador {
     this.#vista.alEscribir({
       escribir: (texto) => this.#escribir(texto),
       confirmar: (texto) => this.#confirmar(texto),
-      previsualizar: (texto) => this.#vista.mostrarProgreso(this.#modelo.progreso(texto)),
+      previsualizar: (texto) => this.#vista.mostrarProgreso(this.#modelo.letras(texto)),
     });
     this.#vista.alPulsarAtajo((atajo) => this.#atajo(atajo));
     this.#vista.mostrarListo();
@@ -44,12 +44,24 @@ export class Controlador {
   }
 
   #comenzar() {
-    this.#modelo.comenzar();
-    this.#vista.mostrarPrueba();
-    this.#vista.mostrarPalabra(this.#modelo.palabra);
+    this.#modelo.comenzar(this.#vista.limite, this.#vista.modo);
+    this.#vista.mostrarPrueba(this.#modelo.limite);
+    this.#vista.mostrarPalabra(this.#modelo.palabra, this.#modelo.siguientes);
     this.#refrescarMarcadores();
     this.#vista.anunciar(`Prueba en marcha. Primera palabra: ${this.#modelo.palabra}.`);
-    this.#intervalo = setInterval(() => this.#refrescarMarcadores(), REFRESCO_MS);
+    this.#intervalo = setInterval(() => this.#tic(), REFRESCO_MS);
+  }
+
+  #tic() {
+    if (!this.#terminarSiToca()) this.#refrescarMarcadores();
+  }
+
+  // El límite se comprueba en cada tic y en cada pulsación: la que llega después de cumplirse,
+  // antes del siguiente tic, termina la prueba en lugar de contar como error.
+  #terminarSiToca() {
+    if (!this.#modelo.activo || !this.#modelo.limiteAlcanzado) return false;
+    this.#detener();
+    return true;
   }
 
   #detener() {
@@ -59,50 +71,63 @@ export class Controlador {
     // Los marcadores quedan con el valor final y no con el del último tic.
     this.#refrescarMarcadores();
 
-    const { correctas, milisegundos, precision, fallosPorTecla } = this.#modelo;
+    const { correctas, milisegundos, precision, precisionPalabras, fallosPorTecla, pasadas, sinCorregir, correcciones } = this.#modelo;
     const ppm = Math.round(this.#modelo.palabrasPorMinuto);
+    const pulsaciones = Math.round(this.#modelo.pulsacionesPorMinuto);
     const record = correctas > 0 && milisegundos >= PPM_DESDE_MS && ppm > this.#mejorMarca;
     if (record) {
       this.#mejorMarca = ppm;
       guardarMejorMarca(ppm);
     }
     this.#vista.mostrarResultado({
-      ppm, correctas, segundos: milisegundos / 1000, precision, mejorMarca: this.#mejorMarca, record,
-      fallos: fallosPorTecla,
+      ppm, pulsaciones, correctas, segundos: milisegundos / 1000, precision, precisionPalabras, mejorMarca: this.#mejorMarca, record,
+      fallos: fallosPorTecla, ritmo: this.#modelo.ritmo(PPM_DESDE_MS), pasadas, sinCorregir, correcciones,
     });
   }
 
   #escribir(texto) {
-    if (this.#modelo.escribir(texto)) {
-      this.#acertar();
-      return;
-    }
-    this.#vista.mostrarProgreso(this.#modelo.progreso());
+    if (this.#terminarSiToca()) return;
+    this.#modelo.escribir(texto);
+    this.#vista.mostrarProgreso(this.#modelo.letras());
     this.#vista.marcarError(this.#modelo.hayError);
   }
 
   #confirmar(texto) {
-    if (texto === '') return;
-    if (this.#modelo.confirmar(texto)) {
-      this.#acertar();
+    if (texto === '' || this.#terminarSiToca()) return;
+    const pedida = this.#modelo.palabra;
+    const estado = this.#modelo.confirmar(texto);
+    if (estado !== null) {
+      this.#pasar(estado, pedida);
       return;
     }
-    this.#vista.mostrarProgreso(this.#modelo.progreso());
+    this.#vista.mostrarProgreso(this.#modelo.letras());
     this.#vista.marcarError(true);
   }
 
-  #acertar() {
+  #pasar(estado, pedida) {
+    if (this.#terminarSiToca()) return;
     this.#vista.limpiarCampo();
     this.#vista.marcarError(false);
-    this.#vista.mostrarPalabra(this.#modelo.palabra);
+    this.#vista.mostrarPalabra(this.#modelo.palabra, this.#modelo.siguientes);
     this.#refrescarMarcadores();
-    this.#vista.celebrarAcierto();
-    this.#vista.anunciar(this.#modelo.palabra);
+    if (estado === 'sinCorregir') {
+      this.#vista.avanzarHoja();
+      this.#vista.anunciar(`Sin corregir: ${pedida}. ${this.#modelo.palabra}`);
+    } else {
+      this.#vista.celebrarAcierto();
+      this.#vista.anunciar(this.#modelo.palabra);
+    }
   }
 
   #refrescarMarcadores() {
-    const { correctas, segundos, milisegundos, palabrasPorMinuto } = this.#modelo;
-    const ppm = milisegundos >= PPM_DESDE_MS ? palabrasPorMinuto : null;
-    this.#vista.mostrarMarcadores({ correctas, segundos, ppm });
+    const { correctas, segundos, milisegundos, palabrasPorMinuto, pulsacionesPorMinuto, activo, progreso } = this.#modelo;
+    const enMarcha = milisegundos >= PPM_DESDE_MS;
+    this.#vista.mostrarMarcadores({
+      correctas,
+      segundos,
+      ppm: enMarcha ? palabrasPorMinuto : null,
+      pulsaciones: enMarcha ? pulsacionesPorMinuto : null,
+    });
+    this.#vista.mostrarAvance(activo ? progreso : null);
   }
 }

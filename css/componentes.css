@@ -1,21 +1,128 @@
 @layer componentes {
-  /* Cabecera y pie */
+  /* Cabecera: solo el título, acotado también por el alto de la ventana */
 
+  /* Por debajo del 80 % del cuerpo máximo de la palabra, y sin negrita, para no competir con ella */
   .cabecera__titulo {
-    font-size: clamp(var(--paso-3), 1.2rem + 3vw, var(--paso-5));
-    font-weight: var(--peso-fuerte);
+    font-size: min(clamp(2rem, 1.5rem + 3vw, 4.25rem), 8dvh);
+    font-weight: var(--peso-normal);
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
   }
 
-  .cabecera__lema {
-    max-inline-size: 34ch;
-    text-wrap: pretty;
+  /* Límites: tiras de botones de tinta como el de Iniciar; el elegido va relleno */
+
+  .ajustes,
+  .selector {
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
   }
 
-  .pie {
+  /* Mismo estilo y altura que el título del detalle */
+  .ajustes__titulo {
+    margin-block-end: var(--espacio-2);
+    padding: 0;
+    font-weight: var(--peso-fuerte);
+  }
+
+  .ajustes__nota {
     font-size: var(--paso--1);
     color: var(--tinta-suave);
+  }
+
+  /* En móvil no hay detalle al lado con el que alinearse y falta alto: título y nota quedan para el lector de pantalla */
+  @media (width < 48rem) {
+    .ajustes__titulo,
+    .ajustes__nota {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  .selector__titulo {
+    padding: 0;
+    color: var(--tinta-suave);
+  }
+
+  .selector__opcion {
+    min-block-size: 2.75rem;
+    min-inline-size: 2.75rem;
+    padding-inline: var(--espacio-2);
+    font-weight: var(--peso-medio);
+    font-variant-numeric: tabular-nums;
+    border: 2px solid var(--tinta);
+    border-radius: var(--radio);
+    cursor: pointer;
+    touch-action: manipulation;
+
+    /* Una sola tira: borde exterior de 2px y separadores de 1px */
+    &:not(:last-of-type) {
+      border-inline-end-width: 0;
+      border-start-end-radius: 0;
+      border-end-end-radius: 0;
+    }
+
+    & + & {
+      border-inline-start-width: 1px;
+      border-start-start-radius: 0;
+      border-end-start-radius: 0;
+    }
+
+    & input {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      margin: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &:has(:checked) {
+      color: var(--papel);
+      background-color: var(--tinta);
+    }
+
+    &:has(:focus-visible) {
+      z-index: 1;
+      outline: var(--anillo) solid var(--tinta);
+      outline-offset: 2px;
+    }
+
+    /* Deshabilitados como el botón y el campo: borde discontinuo */
+    .ajustes:disabled & {
+      color: var(--tinta-suave);
+      border-color: var(--borde);
+      border-style: dashed;
+      cursor: not-allowed;
+
+      &:has(:checked) {
+        color: var(--papel);
+        background-color: var(--tinta-suave);
+      }
+    }
+  }
+
+  .vista-resultado .selector__opcion {
+    flex: 1;
+  }
+
+  /* En la tira estrecha cada botón cede hasta el ancho de su número: los cinco caben en 11rem */
+  @container ajustes (inline-size < 20rem) {
+    .selector__opcion {
+      min-inline-size: auto;
+      padding-inline: var(--espacio-1);
+    }
+  }
+
+  @media (hover: hover) {
+    .ajustes:enabled .selector__opcion:not(:has(:checked)):hover {
+      background-color: var(--renglon);
+    }
   }
 
   /* Marcadores: cifra y nombre sobre la mesa, sin cajas (semejanza con el detalle) */
@@ -28,11 +135,49 @@
     }
   }
 
+  .marcador__tope {
+    color: var(--tinta-suave);
+
+    &:empty {
+      display: none;
+    }
+  }
+
   .marcador__valor {
     font-size: var(--paso-3);
     font-weight: var(--peso-fuerte);
     line-height: 1;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Escritorio ancho: la fila lleva los cuatro con topes de tres cifras en 44rem, así que nombres y topes
+     bajan un paso */
+  @media (width >= 80rem) {
+    .marcadores :is(.marcador__etiqueta, .marcador__tope) {
+      font-size: var(--paso--1);
+    }
+
+    /* Hasta 1366px de ancho la columna central mide menos de 42rem y las cifras bajan un paso */
+    @container marcadores (inline-size < 42rem) {
+      .marcadores .marcador__valor {
+        font-size: var(--paso-2);
+      }
+    }
+  }
+
+  /* Columna estrecha: cifra a --paso-1 y nombres a --paso--1, como en el detalle */
+  @container principal (inline-size < 30rem) {
+    .marcadores .marcador__valor {
+      font-size: var(--paso-1);
+    }
+
+    .marcadores :is(.marcador__etiqueta, .marcador__tope) {
+      font-size: var(--paso--1);
+    }
+
+    .marcadores .marcador__tope {
+      line-height: 1;
+    }
   }
 
   /* Con el resultado abierto la cifra está en la hoja; visibility conserva el alto de la línea */
@@ -44,9 +189,10 @@
 
   .hoja {
     --rodillo: 1rem;
+    --_margen: var(--espacio-4);
 
     margin-block-start: calc(var(--rodillo) / 2);
-    padding: var(--espacio-5) var(--espacio-4) var(--espacio-4);
+    padding: var(--respiro) var(--_margen) var(--_margen);
     background-color: var(--papel);
     border: 1px solid transparent;
 
@@ -57,8 +203,13 @@
       inset-block-start: calc(var(--rodillo) / -2);
       inset-inline: calc(var(--espacio-2) * -1);
       block-size: var(--rodillo);
-      background-color: var(--tinta);
       border-radius: var(--rodillo);
+
+      /* Con --progreso, lo recorrido en tinta sobre una pista clara; sin él, todo en tinta */
+      background-color: color-mix(in hsl, var(--tinta) 30%, var(--mesa));
+      background-image: linear-gradient(var(--tinta), var(--tinta));
+      background-repeat: no-repeat;
+      background-size: calc(var(--progreso, 1) * 100%) 100%;
     }
 
     /* La cinta bicolor en el punto de impresión: banda de tinta sobre banda roja */
@@ -66,11 +217,18 @@
       content: "";
       position: absolute;
       inset-block-start: calc(var(--rodillo) * 0.75);
-      inset-inline-start: calc(var(--espacio-4) + var(--sangria));
+      inset-inline-start: calc(var(--_margen) + var(--sangria));
       inline-size: 2.5rem;
       block-size: 0.5rem;
       background-color: var(--cinta);
       border-block-start: 0.25rem solid var(--tinta);
+    }
+  }
+
+  /* En columna estrecha el margen cede sitio a la palabra y al mensaje de error */
+  @container principal (inline-size < 30rem) {
+    .hoja {
+      --_margen: var(--espacio-3);
     }
   }
 
@@ -92,6 +250,55 @@
 
     .app[data-estado="error"] & {
       display: none;
+    }
+
+    /* Cursor: avanza una letra (1ch en letra monoespaciada) por cada carácter tecleado. Sin --cursor el
+       ancho no es válido, queda en auto y el cursor no se ve. */
+    &::after {
+      content: "";
+      position: absolute;
+      inset-block-end: 0.02em;
+      inset-inline-start: var(--sangria);
+      inline-size: calc(var(--cursor) * 0ch + 1ch);
+      block-size: 0.08em;
+      background-color: var(--tinta);
+      translate: calc(var(--cursor) * 1ch) 0;
+    }
+  }
+
+  /* Las siguientes, en la misma letra y cada vez más pequeñas: la hoja que va saliendo */
+  .cola {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    .app:not([data-estado="activo"]) & {
+      visibility: hidden;
+    }
+
+    .app[data-estado="error"] & {
+      display: none;
+    }
+  }
+
+  .cola__palabra {
+    --_cuerpo: var(--paso-3);
+
+    padding-inline: var(--sangria);
+    font: var(--peso-fuerte) min(var(--_cuerpo), calc((100cqi - 2 * var(--sangria)) * 1.55 / 12)) / 1.2 var(--fuente-hoja);
+    white-space: nowrap;
+    overflow-x: clip;
+    color: var(--guia);
+
+    /* Más pequeñas y más claras cuanto más lejos, sin bajar de 3:1 sobre el papel */
+    &:nth-child(2) {
+      --_cuerpo: var(--paso-2);
+      color: color-mix(in hsl, var(--guia) 80%, var(--papel));
+    }
+
+    &:nth-child(3) {
+      --_cuerpo: var(--paso-1);
+      color: color-mix(in hsl, var(--guia) 72%, var(--papel));
     }
   }
 
@@ -115,14 +322,6 @@
 
   .letra--sobrante {
     text-decoration-line: line-through;
-  }
-
-  /* Cursor fijo, sin parpadeo */
-  .letra--cursor {
-    text-decoration: underline solid var(--tinta);
-    text-decoration-thickness: 0.08em;
-    text-decoration-skip-ink: none;
-    text-underline-offset: 0.14em;
   }
 
   .aviso {
@@ -150,8 +349,65 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Las dos unidades apiladas: la de las palabras arriba y la de las pulsaciones, más pequeña, apoyada en la
+     línea base de la cifra */
+  .resultado__unidades {
+    display: grid;
+    min-inline-size: 0;
+  }
+
   .resultado__unidad {
     color: var(--tinta-suave);
+  }
+
+  .resultado__unidad + .resultado__unidad {
+    font-size: var(--paso--1);
+    line-height: 1.3;
+  }
+
+  .resultado__pulsaciones {
+    font-weight: var(--peso-fuerte);
+    font-variant-numeric: tabular-nums;
+    color: var(--tinta);
+  }
+
+  /* Hoja escrita: las palabras pasadas, una tras otra; las corregidas con el subrayado del error y las sin corregir
+     con lo escrito tachado junto a la palabra pedida */
+  .escrita {
+    margin: 0;
+    padding: 0 var(--sangria);
+    list-style: none;
+    font: var(--peso-fuerte) var(--paso-1) / 1.4 var(--fuente-hoja);
+    color: var(--tinta);
+    overflow: clip;
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 1lh), transparent);
+  }
+
+  .escrita__palabra--corregida {
+    text-decoration: underline wavy var(--cinta);
+    text-decoration-thickness: 0.06em;
+    text-decoration-skip-ink: none;
+    text-underline-offset: 0.18em;
+  }
+
+  /* Fallo grave: lo escrito tachado y la palabra pedida en recuadro, así que se distingue sin el color */
+  .escrita__palabra--sin-corregir {
+    display: flex;
+    gap: 0.5ch;
+  }
+
+  .escrita__escrito {
+    color: var(--cinta);
+    text-decoration: line-through var(--cinta);
+    text-decoration-thickness: 0.14em;
+  }
+
+  .escrita__pedida {
+    padding-inline: 0.3ch;
+    text-decoration: none;
+    background-color: var(--tinte-cinta);
+    outline: 1px solid var(--cinta);
+    outline-offset: -1px;
   }
 
   /* Con el resultado en la hoja no hay nada que escribir: etiqueta y renglón se ocultan sin cambiar de alto */
@@ -179,6 +435,11 @@
     border-block-end: 2px solid var(--borde);
     border-radius: 0;
     caret-color: var(--tinta);
+
+    /* El anillo pegado al borde inferior: una sola línea, también con error */
+    &:focus-visible {
+      outline-offset: 0;
+    }
 
     &:disabled {
       background-color: transparent;
@@ -234,7 +495,7 @@
     --_tinta: var(--papel);
 
     min-block-size: var(--control);
-    min-inline-size: 10ch;
+    min-inline-size: 9rem; /* el de «■ Detener»: Iniciar y Detener miden lo mismo */
     padding: var(--espacio-2) var(--espacio-4);
     font-weight: var(--peso-medio);
     color: var(--_tinta);
@@ -242,6 +503,7 @@
     border: 2px solid var(--tinta);
     border-radius: var(--radio);
     cursor: pointer;
+    touch-action: manipulation;
 
     &::before {
       content: "";
@@ -287,6 +549,14 @@
     }
   }
 
+  /* Modo foco: durante la prueba se atenúan el título y los límites. Se queda en 0,5 para que el
+     título conserve 3:1; marcadores y tiempo siguen a plena opacidad. */
+  @media (prefers-contrast: no-preference) and (forced-colors: none) {
+    .app[data-estado="activo"] :is(.cabecera__titulo, .ajustes) {
+      opacity: 0.5;
+    }
+  }
+
   /* Detalle de la prueba */
 
   .informe__titulo {
@@ -294,8 +564,67 @@
     font-weight: var(--peso-fuerte);
   }
 
+  /* En móvil el conmutador ya dice «Detalle»: el título queda para el lector de pantalla */
+  @media (width < 48rem) {
+    .informe__titulo {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  /* Por debajo de los marcadores: los tres, con unidades («11,8 s», «100 %»), caben en una fila de 18rem */
+  .informe__datos .marcador__valor {
+    font-size: var(--paso-1);
+    white-space: nowrap;
+  }
+
+  .informe__valor,
   .informe__record {
     font-weight: var(--peso-fuerte);
+  }
+
+  /* En la columna del detalle, nombres y resúmenes a --paso--1 para que quepan las dos filas, la
+     línea de practicar y el teclado sin desplazamiento */
+  @media (width >= 48rem) {
+    .informe__datos .marcador__etiqueta {
+      font-size: var(--paso--1);
+      white-space: nowrap;
+    }
+
+    .ritmo__resumen,
+    .fallos__resumen,
+    .informe__marca,
+    .informe__practicar {
+      font-size: var(--paso--1);
+      line-height: 1.35;
+    }
+
+    .informe__palabra {
+      font-size: var(--paso-0);
+      line-height: 1;
+    }
+  }
+
+  /* La cifra de sin corregir pasa a cinta cuando la vista marca data-cuenta distinto de 0 */
+  .marcador__valor[data-cuenta]:not([data-cuenta="0"]) {
+    color: var(--cinta);
+  }
+
+  .informe__practicar {
+    max-inline-size: var(--medida);
+    font-size: var(--paso--1);
+    color: var(--tinta-suave);
+  }
+
+  .informe__palabra {
+    font-family: var(--fuente-hoja);
+    font-size: var(--paso-0);
+    font-weight: var(--peso-fuerte);
+    color: var(--tinta);
   }
 
   .fallos__resumen {
@@ -333,41 +662,21 @@
     }
   }
 
-  /* Lámina: la máquina en escala de grises, sin marco ni nada encima */
-
-  .lamina__foto {
-    display: block;
-    inline-size: 100%;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    object-position: 50% 30%;
-    filter: grayscale(1);
-  }
-
-  @media (width >= 60rem) {
-    .lamina__foto {
-      aspect-ratio: auto;
-    }
-  }
-
-  .lamina__credito {
-    max-inline-size: 48ch;
-    margin-block-start: var(--espacio-2);
-    font-size: var(--paso--1);
-    color: var(--tinta-suave);
-  }
-
   /* Con el teclado virtual abierto la ventana encoge (interactive-widget=resizes-content);
      durante la prueba se retira lo accesorio para que palabra y campo sigan a la vista. */
-  @media (height < 34rem) {
+  @media (height < 36rem) {
     .app[data-estado="activo"] {
       padding-block: var(--espacio-2);
 
       & .cabecera,
-      & .lamina,
-      & .pie,
-      & .ayuda {
+      & .ajustes,
+      & .ayuda,
+      & .cola__palabra:nth-child(n + 2) {
         display: none;
+      }
+
+      & .cola {
+        block-size: auto;
       }
 
       & .principal {
@@ -377,6 +686,43 @@
       & .hoja {
         --cuerpo-max: 3.25rem;
         padding-block: var(--espacio-2);
+      }
+    }
+  }
+
+  /* Pantallas estrechas y muy bajas (320 × 568) antes de empezar: límites en tiras sin nombre, título más
+     pequeño, huecos recogidos, sin cola ni ayuda a la vista, para que el inicio quepa sin desplazarse. Los
+     nombres quedan para el lector de pantalla. */
+  @media (width < 30rem) and (height < 36rem) {
+    .app:not([data-estado="activo"]) {
+      --respiro: 2dvh;
+
+      & .cabecera__titulo {
+        font-size: var(--paso-2);
+      }
+
+      & .selector__titulo,
+      & .controles__etiqueta,
+      & .ayuda--parado {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      & .ajustes {
+        row-gap: var(--espacio-1);
+      }
+
+      & .cola {
+        block-size: 0;
+      }
+
+      & .ayuda--activo,
+      & .controles__error {
+        display: none;
       }
     }
   }
@@ -391,6 +737,19 @@
       transition: clip-path var(--duracion);
     }
 
+    .cabecera__titulo,
+    .ajustes {
+      transition: opacity var(--duracion);
+    }
+
+    .hoja::before {
+      transition: background-size 200ms linear;
+    }
+
+    .muestra::after {
+      transition: translate 100ms var(--curva);
+    }
+
     /* El golpe del tipo: la cifra sube y vuelve, sin cambiar de color */
     .marcador__valor--golpe {
       animation: golpe var(--golpe) var(--curva);
@@ -400,25 +759,48 @@
       from { transform: translateY(-0.15em); }
     }
 
+    /* Al acertar, la palabra y la cola suben desde la línea de abajo y entra una nueva al final */
+    .hoja--avanza :is(.muestra, .cola__palabra) {
+      animation: avanza var(--avance) var(--curva);
+    }
+
+    .hoja--avanza .cola__palabra:last-child {
+      animation-name: entra;
+    }
+
+    @keyframes avanza {
+      from { translate: 0 0.6em; opacity: 0.4; }
+    }
+
+    @keyframes entra {
+      from { translate: 0 0.6em; opacity: 0; }
+    }
+
     /* Resultado y detalle entran desde @starting-style porque pasan de display: none a visibles */
     .resultado,
+    .escrita,
     .informe__titulo,
     .informe__datos,
+    .ritmo,
     .fallos,
     .teclado__fila {
       transition: opacity var(--entrada) var(--curva), transform var(--entrada) var(--curva);
     }
 
+    .escrita,
     .informe__datos { transition-delay: var(--escalon); }
-    .fallos { transition-delay: calc(var(--escalon) * 2); }
-    .teclado__fila:nth-child(1) { transition-delay: calc(var(--escalon) * 3); }
-    .teclado__fila:nth-child(2) { transition-delay: calc(var(--escalon) * 4); }
-    .teclado__fila:nth-child(3) { transition-delay: calc(var(--escalon) * 5); }
+    .ritmo { transition-delay: calc(var(--escalon) * 2); }
+    .fallos { transition-delay: calc(var(--escalon) * 3); }
+    .teclado__fila:nth-child(1) { transition-delay: calc(var(--escalon) * 4); }
+    .teclado__fila:nth-child(2) { transition-delay: calc(var(--escalon) * 5); }
+    .teclado__fila:nth-child(3) { transition-delay: calc(var(--escalon) * 6); }
 
     @starting-style {
       .resultado,
+      .escrita,
       .informe__titulo,
       .informe__datos,
+      .ritmo,
       .fallos,
       .teclado__fila {
         opacity: 0;
@@ -444,8 +826,22 @@
     }
 
     .letra--error,
-    .letra--sobrante {
+    .letra--sobrante,
+    .escrita__palabra--corregida {
       text-decoration-thickness: 0.09em;
+    }
+
+    .escrita__escrito {
+      text-decoration-thickness: 0.2em;
+    }
+
+    .escrita__pedida {
+      outline-width: 2px;
+    }
+
+    /* nth-child(n) iguala la especificidad de la 2.ª y la 3.ª palabra */
+    .cola__palabra:nth-child(n) {
+      color: var(--tinta-suave);
     }
   }
 
@@ -468,10 +864,31 @@
       background-color: GrayText;
     }
 
-    /* El rodillo se mantiene con el color del texto; la cinta es decorativa y se retira */
+    /* El rodillo y su progreso con los colores del texto; la cinta es decorativa y se retira */
     .hoja::before {
       forced-color-adjust: none;
+      background-color: GrayText;
+      background-image: linear-gradient(CanvasText, CanvasText);
+    }
+
+    .muestra::after {
+      forced-color-adjust: none;
       background-color: CanvasText;
+    }
+
+    /* Corregida: solo el subrayado ondulado. Sin corregir: tachado y recuadro. Ninguna lleva fondo. */
+    .escrita__palabra--corregida,
+    .escrita__escrito {
+      forced-color-adjust: none;
+      color: CanvasText;
+      text-decoration-color: CanvasText;
+    }
+
+    .escrita__pedida {
+      forced-color-adjust: none;
+      color: CanvasText;
+      background-color: Canvas;
+      outline: 2px solid CanvasText;
     }
 
     .hoja::after {
@@ -506,10 +923,34 @@
         color: MarkText;
         background-color: Mark;
       }
+
+      /* Sin gradación de color: el nivel se lee en el grosor del borde, que no cambia el tamaño exterior */
+      &[data-nivel="1"] { border-width: 1px; }
+      &[data-nivel="2"] { border-width: 2px; }
+      &[data-nivel="3"] { border-width: 3px; }
+      &[data-nivel="4"] { border-width: 4px; }
     }
 
     .tecla__cuenta {
       display: block;
+    }
+
+    /* Con teclas pequeñas la cuenta no cabe en el círculo: la da el resumen escrito */
+    @container teclado (inline-size < 30rem) {
+      .tecla__cuenta {
+        display: none;
+      }
+    }
+
+    .selector__opcion:has(:checked) {
+      forced-color-adjust: none;
+      color: HighlightText;
+      background-color: Highlight;
+    }
+
+    .ajustes:disabled .selector__opcion:has(:checked) {
+      color: Canvas;
+      background-color: GrayText;
     }
   }
 }
