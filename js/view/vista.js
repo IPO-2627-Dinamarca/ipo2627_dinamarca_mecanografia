@@ -119,9 +119,9 @@ function resumirRitmo(puntos, fallos) {
   const [desde, hasta] = [puntos[0], puntos.at(-1)].map((p) => ENTERO.format(p.ppm));
   const valores = puntos.map((p) => p.ppm);
   const [menor, mayor] = [Math.min(...valores), Math.max(...valores)].map((n) => ENTERO.format(n));
-  const ritmo = desde !== hasta ? `Ritmo: de ${desde} a ${hasta} ppm.`
-    : menor === mayor ? `Ritmo: ${hasta} ppm de principio a fin.`
-      : `Ritmo: empieza y acaba en ${hasta} ppm, entre ${menor} y ${mayor}.`;
+  const ritmo = desde !== hasta ? `Ritmo: de ${desde} a ${hasta} palabras/min.`
+    : menor === mayor ? `Ritmo: ${hasta} palabras/min de principio a fin.`
+      : `Ritmo: empieza y acaba en ${hasta} palabras/min, entre ${menor} y ${mayor}.`;
   if (fallos.length === 0) return `${ritmo} Sin fallos.`;
 
   // Segundo de cada fallo como ordinal (el primero es el 1), sin repetir.
@@ -146,6 +146,7 @@ export class Vista {
   #correctas;
   #segundos;
   #ppm;
+  #pulsaciones;
   #campo;
   #boton;
   #mensaje;
@@ -170,6 +171,7 @@ export class Vista {
     this.#correctas = nodo('correctas');
     this.#segundos = nodo('segundos');
     this.#ppm = nodo('ppm');
+    this.#pulsaciones = nodo('pulsaciones');
     this.#campo = nodo('campo');
     this.#boton = nodo('boton');
     this.#mensaje = nodo('mensaje');
@@ -184,8 +186,10 @@ export class Vista {
     this.#resultado = {
       panel: nodo('resultado'),
       ppm: nodo('resultado-ppm'),
+      pulsaciones: nodo('resultado-pulsaciones'),
       tiempo: nodo('resultado-tiempo'),
       precision: nodo('resultado-precision'),
+      precisionFinal: nodo('resultado-precision-final'),
       marca: nodo('resultado-marca'),
       record: nodo('resultado-record'),
       corregidos: nodo('resultado-corregidos'),
@@ -327,11 +331,12 @@ export class Vista {
     });
   }
 
-  /** @param {{correctas: number, segundos: number, ppm: number|null}} marcadores */
-  mostrarMarcadores({ correctas, segundos, ppm }) {
+  /** @param {{correctas: number, segundos: number, ppm: number|null, pulsaciones: number|null}} marcadores */
+  mostrarMarcadores({ correctas, segundos, ppm, pulsaciones }) {
     escribirTexto(this.#correctas, ENTERO.format(correctas));
     escribirTexto(this.#segundos, ENTERO.format(segundos));
     escribirTexto(this.#ppm, ppm === null ? '—' : ENTERO.format(ppm));
+    escribirTexto(this.#pulsaciones, pulsaciones === null ? '—' : ENTERO.format(pulsaciones));
   }
 
   /** Fracción (0–1) del límite ya cumplida, en --progreso de la hoja; null la retira. */
@@ -368,8 +373,8 @@ export class Vista {
   }
 
   /**
-   * @param {{ppm: number, correctas: number, segundos: number, precision: number|null,
-   *          mejorMarca: number, record: boolean, fallos: Map<string, number>,
+   * @param {{ppm: number, pulsaciones: number, correctas: number, segundos: number, precision: number|null,
+   *          precisionPalabras: number|null, mejorMarca: number, record: boolean, fallos: Map<string, number>,
    *          ritmo: {puntos: {s: number, ppm: number}[], fallos: number[], sinCorregir: number[],
    *                  duracion: number},
    *          pasadas: {pedida: string, escrita: string, estado: string}[],
@@ -377,13 +382,15 @@ export class Vista {
    *          correcciones: {cuantas: number, mediaMs: number|null}}} resultado
    */
   mostrarResultado({
-    ppm, correctas, segundos, precision, mejorMarca, record, fallos, ritmo, pasadas, sinCorregir, correcciones,
+    ppm, pulsaciones, correctas, segundos, precision, precisionPalabras, mejorMarca, record, fallos, ritmo, pasadas, sinCorregir, correcciones,
   }) {
     const r = this.#resultado;
     r.ppm.textContent = ENTERO.format(ppm);
+    r.pulsaciones.textContent = ENTERO.format(pulsaciones);
     r.tiempo.textContent = SEGUNDOS.format(segundos);
     r.precision.textContent = precision === null ? '—' : PORCENTAJE.format(precision);
-    r.marca.textContent = mejorMarca > 0 ? `${ENTERO.format(mejorMarca)} ppm` : '—';
+    r.precisionFinal.textContent = precisionPalabras === null ? '—' : PORCENTAJE.format(precisionPalabras);
+    r.marca.textContent = mejorMarca > 0 ? `${ENTERO.format(mejorMarca)} palabras/min` : '—';
     r.record.hidden = !record;
     r.corregidos.textContent = ENTERO.format(correcciones.cuantas);
     r.correccion.textContent = correcciones.mediaMs === null ? '—' : SEGUNDOS.format(correcciones.mediaMs / 1000);
@@ -400,6 +407,9 @@ export class Vista {
     this.#pintarPracticar(pendientes);
 
     this.#cambiarEstado('parado');
+    // Cada resultado empieza mostrando la hoja, no el detalle.
+    const radioHoja = document.querySelector('input[name="vista-resultado"][value="hoja"]');
+    if (radioHoja) radioHoja.checked = true;
     this.limpiarCampo();
     this.marcarError(false);
     this.#palabra.hidden = true;
@@ -407,10 +417,12 @@ export class Vista {
     this.#informe.hidden = false;
     this.#boton.focus();
 
-    const detalle = precision === null ? '' : `, precisión del ${PORCENTAJE.format(precision)}`;
+    const detalle = precision === null ? ''
+      : `, precisión real del ${PORCENTAJE.format(precision)}`
+        + (precisionPalabras === null ? '' : ` y final del ${PORCENTAJE.format(precisionPalabras)}`);
     this.anunciar(
       `Prueba detenida. ${textoCorrectas(correctas)} en ${SEGUNDOS.format(segundos)}: `
-      + `${ENTERO.format(ppm)} palabras por minuto${detalle}.${record ? ' Nueva mejor marca.' : ''}`
+      + `${ENTERO.format(ppm)} palabras por minuto, ${ENTERO.format(pulsaciones)} pulsaciones por minuto${detalle}.${record ? ' Nueva mejor marca.' : ''}`
       + (precision === null ? '' : ` ${resumen}`)
       + (corregidas.length === 0 ? '' : ` Corregidas: ${listaAcotada(corregidas, PALABRAS_EN_RESUMEN)}.`)
       + (pendientes.length === 0 ? '' : ` Sin corregir: ${listaAcotada(pendientes, PALABRAS_EN_RESUMEN)}.`),
@@ -492,7 +504,7 @@ export class Vista {
     const y = (ppm) => base - (ppm / tope) * (base - techo);
     const final = puntos.at(-1);
 
-    r.tope.textContent = `${ENTERO.format(tope)} ppm`;
+    r.tope.textContent = `${ENTERO.format(tope)} palabras/min`;
     r.linea.setAttribute('points', puntos.map((p) => `${x(p.s).toFixed(1)},${y(p.ppm).toFixed(1)}`).join(' '));
     r.punto.setAttribute('cx', x(final.s).toFixed(1));
     r.punto.setAttribute('cy', y(final.ppm).toFixed(1));
