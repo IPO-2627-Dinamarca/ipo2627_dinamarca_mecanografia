@@ -24,12 +24,6 @@
   .prueba { grid-area: prueba; }
   .informe { grid-area: informe; }
 
-  /* El conmutador Hoja / Detalle solo existe en móvil y con el resultado a la vista */
-  .selector.vista-resultado {
-    grid-area: vista;
-    display: none;
-  }
-
   /* Contenedor de consulta: el mando se apila cuando la columna es estrecha.
      Móvil: una columna en el orden del DOM. */
   .principal {
@@ -139,37 +133,6 @@
     gap: var(--espacio-2) var(--espacio-5);
   }
 
-  /* Con la columna central en su mínimo no caben los cuatro con topes de tres cifras en una línea: dos filas fijas,
-     correctas y segundos arriba; palabras/min y ppm abajo. Así no se parte nada a mitad de prueba. */
-  @media (48rem <= width < 80rem) {
-    .marcadores {
-      display: grid;
-      grid-template-columns: repeat(2, auto);
-      justify-content: space-between;
-    }
-
-    .marcadores > :nth-child(even) {
-      justify-self: end;
-    }
-
-    .marcadores > .marcador--ritmo {
-      margin-inline-start: 0;
-    }
-  }
-
-  /* Escritorio ancho: los cuatro en una línea; los dos de ritmo juntos al final */
-  @media (width >= 80rem) {
-    .marcadores {
-      column-gap: var(--espacio-3);
-    }
-
-    @container marcadores (inline-size < 42rem) {
-      .marcadores {
-        column-gap: 0.75rem;
-      }
-    }
-  }
-
   /* Detalle: los tres datos en una fila, con la cifra encima del nombre; cada columna mide lo que su dato */
   .informe__datos {
     display: grid;
@@ -194,43 +157,6 @@
     flex-direction: column;
     align-items: start;
     gap: 0;
-  }
-
-  .marcador--ritmo {
-    margin-inline-start: auto;
-  }
-
-  .marcador--ritmo + .marcador--ritmo {
-    margin-inline-start: 0;
-  }
-
-  /* Columna estrecha: cuatro marcadores en dos filas de dos, cada uno con la cifra y el tope sobre el nombre */
-  @container principal (inline-size < 30rem) {
-    .marcadores {
-      display: grid;
-      grid-template-columns: repeat(2, auto);
-      justify-content: space-between;
-      gap: var(--espacio-1) var(--espacio-3);
-    }
-
-    .marcadores > :nth-child(even) {
-      justify-self: end;
-    }
-
-    .marcadores > .marcador--ritmo {
-      margin-inline-start: 0;
-    }
-
-    .marcadores .marcador {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      align-items: baseline;
-      gap: 0 0.35em;
-    }
-
-    .marcadores .marcador__etiqueta {
-      grid-column: 1 / -1;
-    }
   }
 
   .prueba {
@@ -261,36 +187,7 @@
     }
   }
 
-  /* Móvil con el resultado: la hoja y el detalle no caben a la vez; un conmutador de CSS puro (:has) elige uno
-     y el detalle ocupa el sitio de la hoja, entre el conmutador y el botón */
-  @media (width < 48rem) {
-    .principal:has(.informe:not([hidden])) {
-      grid-template-areas:
-        "ajustes"
-        "marcadores"
-        "vista"
-        "informe"
-        "prueba";
-
-      & .selector.vista-resultado {
-        display: flex;
-      }
-
-      /* Los marcadores repiten lo que ya está en la hoja y el detalle; con el detalle a la vista tampoco
-         se ofrecen los límites, que vuelven con «Hoja» */
-      & .marcadores,
-      &:has([value="detalle"]:checked) .ajustes {
-        display: none;
-      }
-
-      &:not(:has([value="detalle"]:checked)) .informe,
-      &:has([value="detalle"]:checked) .hoja {
-        display: none;
-      }
-    }
-  }
-
-  /* Móvil: con tres grupos de límites, los huecos se recogen para que inicio y prueba quepan a 390 × 844 */
+  /* Móvil: con dos grupos de límites, los huecos se recogen para que inicio y prueba quepan a 390 × 844 */
   @media (width < 48rem) {
     .principal {
       gap: var(--espacio-2);
@@ -323,12 +220,12 @@
     min-block-size: calc(var(--cuerpo-max) * 1.15);
   }
 
-  /* Las siguientes palabras, de mayor a menor, en un alto fijo */
+  /* La siguiente palabra, en un alto fijo */
   .cola {
     grid-area: cola;
     display: grid;
     align-content: start;
-    block-size: calc((var(--paso-3) + var(--paso-2) + var(--paso-1)) * 1.2);
+    block-size: calc(var(--paso-3) * 1.2);
   }
 
   /* En el resultado, la hoja escrita ocupa el hueco de la cola y del campo. Con contain: size no aporta
@@ -391,7 +288,7 @@
     gap: var(--espacio-2);
   }
 
-  /* Juntas las piezas del detalle: en móvil ocupa el sitio de la hoja y en su columna tiene el alto justo */
+  /* Juntas las piezas del detalle: en su columna tiene el alto justo */
   .informe {
     display: grid;
     gap: var(--espacio-2);
@@ -411,7 +308,7 @@
     }
   }
 
-  /* Ventanas bajas: el detalle completo (dos filas, gráfica con su pie, practicar y teclado) junta sus piezas */
+  /* Ventanas bajas: el detalle completo (datos, marca y teclado) junta sus piezas */
   @media (width >= 64rem) and (height < 45rem) {
     .informe,
     .fallos {

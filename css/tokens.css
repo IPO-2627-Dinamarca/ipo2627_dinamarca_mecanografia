@@ -63,9 +63,6 @@
     --control: 3rem; /* alto mínimo del botón: objetivo táctil holgado */
     --duracion: 150ms;
     --entrada: 240ms;
-    --escalon: 60ms;
-    --golpe: 140ms;
-    --avance: 160ms; /* la hoja sube una línea al acertar */
     --curva: cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }

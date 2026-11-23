@@ -5,9 +5,9 @@ const CLAVE_MEJOR_MARCA = 'mecanografia.mejorMarca';
 const MARCA_MAXIMA = 300;
 
 /**
- * Descarga las dos listas de palabras, las comunes y las raras, y las depura (sin repetidas ni
- * espacios, en NFC). Los mensajes de error están pensados para mostrarse al usuario.
- * @returns {Promise<{comunes: string[], raras: string[]}>}
+ * Descarga la lista de palabras comunes y la depura (sin repetidas ni espacios, en NFC).
+ * Los mensajes de error están pensados para mostrarse al usuario.
+ * @returns {Promise<{comunes: string[]}>}
  */
 export async function cargarPalabras(url = URL_PALABRAS) {
   let respuesta;
@@ -29,13 +29,13 @@ export async function cargarPalabras(url = URL_PALABRAS) {
   } catch (error) {
     throw new Error('La lista de palabras no es un JSON válido.', { cause: error });
   }
-  if (!Array.isArray(datos?.comunes) || (datos.raras !== undefined && !Array.isArray(datos.raras))) {
-    throw new Error('La lista de palabras debe tener un array «comunes» y, si acaso, otro «raras».');
+  if (!Array.isArray(datos?.comunes)) {
+    throw new Error('La lista de palabras debe tener un array «comunes».');
   }
-  return { comunes: depurar(datos.comunes, 'comunes'), raras: depurar(datos.raras ?? [], 'raras') };
+  return { comunes: depurar(datos.comunes) };
 }
 
-function depurar(lista, nombre) {
+function depurar(lista) {
   const palabras = [...new Set(
     lista
       .filter((palabra) => typeof palabra === 'string')
@@ -44,7 +44,7 @@ function depurar(lista, nombre) {
   )];
   const descartadas = lista.length - palabras.length;
   if (descartadas > 0) {
-    console.warn(`palabras.json (${nombre}): ${descartadas} entradas descartadas por repetidas o no válidas.`);
+    console.warn(`palabras.json: ${descartadas} entradas descartadas por repetidas o no válidas.`);
   }
   return palabras;
 }
