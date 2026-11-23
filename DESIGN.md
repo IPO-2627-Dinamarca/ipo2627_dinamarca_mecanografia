@@ -213,6 +213,19 @@ tarda en corregir; lo que no se corrige es el fallo grave que hay que practicar.
 - Forced-colors: las corregidas solo con el subrayado ondulado y las sin corregir con tachado y recuadro, sin fondo
   `Mark` en ninguna, para que se distingan por la forma; en el teclado de fallos el nivel se marca también con el
   grosor del borde (1 a 4px) sin cambiar el tamaño del círculo.
+
+### Revisión del 2026-11-22 (6): métricas y fallos
+
+- Precisión final por letras: mismo denominador que la real (pulsaciones) y solo resta los errores que siguen en lo
+  entregado. Como cada uno ya contó como fallo, nunca queda por debajo de la real. La de la revisión 5 era por
+  palabras y podía salir menor. `escribir` cuenta las inserciones con un diff de prefijo y sufijo comunes, y las
+  letras que una edición desplaza vuelven a contarse.
+- El reloj arranca con la primera tecla. Con menos de 5 s el resultado muestra «—» en las velocidades.
+- Al acabar, el foco va al título del resultado (`tabindex="-1"`), no al botón: el Espacio de la última palabra ya
+  no relanza la prueba. Durante 5 s el botón queda con `aria-disabled` y la ayuda pide esperar.
+- Espacio pasa de palabra también con el campo al tope de `maxlength` (se lee en `keydown`), y el cursor no se
+  puede mover del final.
+- El teclado de fallos ya no apunta las letras que faltaban en una palabra pasada a medias.
 ---
 
 ## 1. Concepto

@@ -26,7 +26,8 @@ export class Modelo {
   // el modelo apunta como fallo al pasar una palabra incompleta.
   #teclas = 0;
   #fallos = 0;
-  #inicio = 0;
+  // null hasta la primera tecla que escribe: el reloj arranca con ella.
+  #inicio = null;
   #fin = 0;
   #activo = false;
   #limite = SIN_LIMITE;
@@ -90,6 +91,7 @@ export class Modelo {
 
   /** Tiempo de la prueba en curso o de la última, medido con el reloj del navegador. */
   get milisegundos() {
+    if (this.#inicio === null) return 0;
     return (this.#activo ? performance.now() : this.#fin) - this.#inicio;
   }
 
@@ -113,10 +115,16 @@ export class Modelo {
     return this.#pulsaciones > 0 ? (this.#pulsaciones - this.#fallos) / this.#pulsaciones : null;
   }
 
-  /** Fracción de palabras pasadas que se entregaron bien (0–1), o null si no se pasó ninguna. */
-  get precisionPalabras() {
-    const pasadas = this.#pasadas.length;
-    return pasadas > 0 ? this.#correctas / pasadas : null;
+  /**
+   * Fracción de pulsaciones sin error en lo entregado (0–1), o null si aún no se ha tecleado nada.
+   * Mismo denominador que precision; solo restan los errores que quedan en las palabras pasadas
+   * sin corregir. Como cada uno se contó antes como fallo, nunca es menor que precision.
+   */
+  get precisionFinal() {
+    if (this.#pulsaciones === 0) return null;
+    const quedan = this.#pasadas.filter((p) => p.estado === 'sinCorregir')
+      .reduce((suma, { pedida, escrita }) => suma + Modelo.#errores(pedida, escrita), 0);
+    return (this.#pulsaciones - quedan) / this.#pulsaciones;
   }
 
   /** Avance hacia el límite (0–1): el más cercano de los que haya; null sin límite. */
@@ -194,7 +202,7 @@ export class Modelo {
     this.#instantesFallo = [];
     this.#correcciones = [];
     this.#cola = Array.from({ length: EN_COLA }, () => this.#sortear());
-    this.#inicio = performance.now();
+    this.#inicio = null;
     this.#activo = true;
     this.#avanzar();
   }
@@ -204,7 +212,9 @@ export class Modelo {
     // Si se acabó el tiempo, la prueba dura exactamente el límite aunque el aviso llegue tarde.
     const { segundos } = this.#limite;
     const ahora = performance.now();
-    this.#fin = segundos === null ? ahora : Math.min(ahora, this.#inicio + segundos * 1000);
+    if (this.#inicio !== null) {
+      this.#fin = segundos === null ? ahora : Math.min(ahora, this.#inicio + segundos * 1000);
+    }
     this.#activo = false;
     this.#intento = '';
     this.#inicioError = null;
@@ -212,17 +222,33 @@ export class Modelo {
 
   /**
    * Registra el contenido del campo. Cada letra nueva cuenta como pulsación y, si no
-   * coincide con la de su posición, como fallo. Un error empieza cuando lo escrito deja de
-   * ser principio de la palabra y queda corregido cuando vuelve a serlo.
+   * coincide con la de su posición, como fallo. Si una edición en medio desplaza las letras
+   * de detrás, estas se cuentan de nuevo en su nueva posición (fallo sin tecla si quedan mal).
+   * Un error empieza cuando lo escrito deja de ser principio de la palabra y queda corregido
+   * cuando vuelve a serlo.
    */
   escribir(texto) {
     if (!this.#activo || this.limiteAlcanzado) return;
     const intento = Modelo.#normalizar(texto);
+    const anterior = this.#intento;
+    if (this.#inicio === null && intento !== '') this.#inicio = performance.now();
     const habiaError = this.hayError;
-    for (let i = this.#intento.length; i < intento.length; i++) {
+
+    // Lo nuevo es lo que queda entre el principio y el final comunes con lo anterior.
+    const corto = Math.min(anterior.length, intento.length);
+    let antes = 0;
+    while (antes < corto && anterior[antes] === intento[antes]) antes++;
+    let despues = 0;
+    while (despues < corto - antes && anterior.at(-1 - despues) === intento.at(-1 - despues)) despues++;
+    const finNuevo = intento.length - despues;
+    const hasta = intento.length === anterior.length ? finNuevo : intento.length;
+    for (let i = antes; i < hasta; i++) {
       this.#pulsaciones++;
-      this.#teclas++;
-      if (intento[i] !== this.#palabra[i]) this.#fallar(this.#palabra[i], intento[i]);
+      const tecleada = i < finNuevo;
+      if (tecleada) this.#teclas++;
+      if (intento[i] === this.#palabra[i]) continue;
+      if (tecleada) this.#fallar(this.#palabra[i], intento[i]);
+      else this.#contarFallo();
     }
     this.#intento = intento;
 
@@ -237,8 +263,9 @@ export class Modelo {
   /**
    * Espacio o Intro con algo escrito. Si la palabra está completa y sin errores, suma y pasa
    * a la siguiente. Si no, en modo libre pasa igualmente sin sumar y cada letra que faltaba
-   * cuenta como pulsación fallada. En estricto no avanza: si lo escrito es correcto pero
-   * incompleto cuenta un fallo; si ya tenía un error, ese fallo se contó al teclearlo.
+   * cuenta como pulsación fallada, sin apuntarse a ninguna tecla. En estricto no avanza: si lo
+   * escrito es correcto pero incompleto cuenta un fallo; si ya tenía un error, ese fallo se
+   * contó al teclearlo.
    * @returns {string|null} estado de la palabra pasada, o null si no se pasó.
    */
   confirmar(texto) {
@@ -253,9 +280,9 @@ export class Modelo {
     }
     if (this.#modo === 'libre') {
       this.#teclas++; // el espacio que pasa de palabra; las letras que faltan no se teclearon
-      for (const letra of this.#palabra.slice(this.#intento.length)) {
+      for (let i = this.#intento.length; i < this.#palabra.length; i++) {
         this.#pulsaciones++;
-        this.#fallar(letra);
+        this.#contarFallo();
       }
       return this.#pasar('sinCorregir');
     }
@@ -272,11 +299,26 @@ export class Modelo {
     return estado;
   }
 
+  // Fallo de una tecla pulsada: cuenta para la precisión, la gráfica y el teclado.
   #fallar(esperada, escrita) {
-    this.#fallos++;
-    this.#palabraConFallo = true;
+    this.#contarFallo();
     this.#instantesFallo.push(this.milisegundos);
     this.#anotarFallo(esperada, escrita);
+  }
+
+  // Fallo sin tecla (letra que faltaba o desplazada): solo cuenta para la precisión.
+  #contarFallo() {
+    this.#fallos++;
+    this.#palabraConFallo = true;
+  }
+
+  // Letras que no coinciden con las de su posición, contando las que faltan y las que sobran.
+  static #errores(pedida, escrita) {
+    let errores = 0;
+    for (let i = 0; i < Math.max(pedida.length, escrita.length); i++) {
+      if (pedida[i] !== escrita[i]) errores++;
+    }
+    return errores;
   }
 
   #anotarFallo(esperada, escrita) {

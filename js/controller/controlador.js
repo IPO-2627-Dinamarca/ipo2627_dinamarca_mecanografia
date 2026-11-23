@@ -6,6 +6,9 @@ const REFRESCO_MS = 200;
 // Con pocos segundos un solo acierto dispara las PPM: no se muestran en vivo ni cuentan
 // como mejor marca hasta pasado este tiempo.
 const PPM_DESDE_MS = 5000;
+// Tras acabar, no se puede volver a empezar hasta pasado este tiempo: así la última
+// pulsación no relanza la prueba sin dejar ver el resultado.
+const ESPERA_REINICIO_MS = 5000;
 
 /** Coordina modelo y vista, y gestiona el temporizador de la prueba. */
 export class Controlador {
@@ -13,6 +16,7 @@ export class Controlador {
   #vista;
   #intervalo = null;
   #mejorMarca = 0;
+  #esperaReinicio = null;
 
   constructor(modelo, vista) {
     this.#modelo = modelo;
@@ -44,6 +48,7 @@ export class Controlador {
   }
 
   #comenzar() {
+    if (this.#esperaReinicio !== null) return;
     this.#modelo.comenzar(this.#vista.limite, this.#vista.modo);
     this.#vista.mostrarPrueba(this.#modelo.limite);
     this.#vista.mostrarPalabra(this.#modelo.palabra, this.#modelo.siguientes);
@@ -71,18 +76,29 @@ export class Controlador {
     // Los marcadores quedan con el valor final y no con el del último tic.
     this.#refrescarMarcadores();
 
-    const { correctas, milisegundos, precision, precisionPalabras, fallosPorTecla, pasadas, sinCorregir, correcciones } = this.#modelo;
-    const ppm = Math.round(this.#modelo.palabrasPorMinuto);
-    const pulsaciones = Math.round(this.#modelo.pulsacionesPorMinuto);
-    const record = correctas > 0 && milisegundos >= PPM_DESDE_MS && ppm > this.#mejorMarca;
+    const { correctas, milisegundos, precision, precisionFinal, fallosPorTecla, pasadas, sinCorregir, correcciones } = this.#modelo;
+    const medible = milisegundos >= PPM_DESDE_MS;
+    const ppm = medible ? Math.round(this.#modelo.palabrasPorMinuto) : null;
+    const pulsaciones = medible ? Math.round(this.#modelo.pulsacionesPorMinuto) : null;
+    const record = medible && correctas > 0 && ppm > this.#mejorMarca;
     if (record) {
       this.#mejorMarca = ppm;
       guardarMejorMarca(ppm);
     }
     this.#vista.mostrarResultado({
-      ppm, pulsaciones, correctas, segundos: milisegundos / 1000, precision, precisionPalabras, mejorMarca: this.#mejorMarca, record,
+      ppm, pulsaciones, correctas, segundos: milisegundos / 1000, precision, precisionFinal, mejorMarca: this.#mejorMarca, record,
       fallos: fallosPorTecla, ritmo: this.#modelo.ritmo(PPM_DESDE_MS), pasadas, sinCorregir, correcciones,
     });
+    this.#bloquearReinicio();
+  }
+
+  #bloquearReinicio() {
+    clearTimeout(this.#esperaReinicio);
+    this.#vista.permitirReinicio(false);
+    this.#esperaReinicio = setTimeout(() => {
+      this.#esperaReinicio = null;
+      this.#vista.permitirReinicio(true);
+    }, ESPERA_REINICIO_MS);
   }
 
   #escribir(texto) {
