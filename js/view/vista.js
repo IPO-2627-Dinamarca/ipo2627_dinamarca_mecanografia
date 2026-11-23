@@ -27,6 +27,9 @@ const INSERCIONES_BLOQUEADAS = new Set([
   'insertFromPaste', 'insertFromDrop', 'insertFromYank', 'insertFromPasteAsQuotation',
 ]);
 
+// Mover el cursor por el campo.
+const TECLAS_DE_CURSOR = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
+
 const nombreTecla = (tecla) => NOMBRES_TECLA[tecla] ?? tecla;
 
 // Los primeros max elementos y, si sobran, cuántos más.
@@ -40,6 +43,8 @@ function acotar(elementos, max) {
 const listaAcotada = (elementos, max) => LISTA.format(acotar(elementos, max));
 
 const textoCorrectas = (n) => `${n} ${n === 1 ? 'palabra correcta' : 'palabras correctas'}`;
+// Cifra con su formato, o una raya si no hay dato.
+const cifra = (formato, n) => (n === null ? '—' : formato.format(n));
 const textoSinCorregir = (n) => `${n} ${n === 1 ? 'palabra' : 'palabras'} sin corregir`;
 
 function crearLetra(letra) {
@@ -144,7 +149,11 @@ export class Vista {
   #ajustes;
   #topes;
   #correctas;
+  #correctasRotulo;
   #segundos;
+  #segundosRotulo;
+  #ayudaLista;
+  #ayudaEspera;
   #ppm;
   #pulsaciones;
   #campo;
@@ -170,6 +179,10 @@ export class Vista {
     this.#topes = { palabras: nodo('tope-palabras'), segundos: nodo('tope-segundos') };
     this.#correctas = nodo('correctas');
     this.#segundos = nodo('segundos');
+    this.#correctasRotulo = nodo('correctas-rotulo');
+    this.#segundosRotulo = nodo('segundos-rotulo');
+    this.#ayudaLista = nodo('ayuda-lista');
+    this.#ayudaEspera = nodo('ayuda-espera');
     this.#ppm = nodo('ppm');
     this.#pulsaciones = nodo('pulsaciones');
     this.#campo = nodo('campo');
@@ -185,6 +198,7 @@ export class Vista {
     this.#practicar = nodo('practicar');
     this.#resultado = {
       panel: nodo('resultado'),
+      titulo: nodo('resultado-titulo'),
       ppm: nodo('resultado-ppm'),
       pulsaciones: nodo('resultado-pulsaciones'),
       tiempo: nodo('resultado-tiempo'),
@@ -200,6 +214,19 @@ export class Vista {
     // Se bloquea pegar y arrastrar texto al campo.
     this.#campo.addEventListener('beforeinput', (evento) => {
       if (INSERCIONES_BLOQUEADAS.has(evento.inputType)) evento.preventDefault();
+    });
+
+    // Solo se escribe y se borra al final de la palabra: sin mover el cursor ni seleccionar.
+    this.#campo.addEventListener('keydown', (evento) => {
+      if (TECLAS_DE_CURSOR.has(evento.key)) evento.preventDefault();
+    });
+    this.#campo.addEventListener('pointerdown', (evento) => {
+      evento.preventDefault();
+      this.#campo.focus();
+    });
+    this.#campo.addEventListener('select', () => {
+      const { length } = this.#campo.value;
+      this.#campo.setSelectionRange(length, length);
     });
   }
 
@@ -234,7 +261,7 @@ export class Vista {
     });
     this.#campo.addEventListener('compositionend', procesar);
     this.#campo.addEventListener('keydown', (evento) => {
-      if (evento.key === 'Enter' && !evento.isComposing) {
+      if ((evento.key === 'Enter' || evento.key === ' ') && !evento.isComposing) {
         evento.preventDefault();
         confirmar(this.#campo.value);
       }
@@ -335,8 +362,18 @@ export class Vista {
   mostrarMarcadores({ correctas, segundos, ppm, pulsaciones }) {
     escribirTexto(this.#correctas, ENTERO.format(correctas));
     escribirTexto(this.#segundos, ENTERO.format(segundos));
-    escribirTexto(this.#ppm, ppm === null ? '—' : ENTERO.format(ppm));
-    escribirTexto(this.#pulsaciones, pulsaciones === null ? '—' : ENTERO.format(pulsaciones));
+    escribirTexto(this.#correctasRotulo, correctas === 1 ? 'correcta' : 'correctas');
+    escribirTexto(this.#segundosRotulo, segundos === 1 ? 'segundo' : 'segundos');
+    escribirTexto(this.#ppm, cifra(ENTERO, ppm));
+    escribirTexto(this.#pulsaciones, cifra(ENTERO, pulsaciones));
+  }
+
+  /** Con false el botón queda atenuado (sigue enfocable) y la ayuda pide esperar. */
+  permitirReinicio(permitido) {
+    if (permitido) this.#boton.removeAttribute('aria-disabled');
+    else this.#boton.setAttribute('aria-disabled', 'true');
+    this.#ayudaLista.hidden = !permitido;
+    this.#ayudaEspera.hidden = permitido;
   }
 
   /** Fracción (0–1) del límite ya cumplida, en --progreso de la hoja; null la retira. */
@@ -373,8 +410,8 @@ export class Vista {
   }
 
   /**
-   * @param {{ppm: number, pulsaciones: number, correctas: number, segundos: number, precision: number|null,
-   *          precisionPalabras: number|null, mejorMarca: number, record: boolean, fallos: Map<string, number>,
+   * @param {{ppm: number|null, pulsaciones: number|null, correctas: number, segundos: number, precision: number|null,
+   *          precisionFinal: number|null, mejorMarca: number, record: boolean, fallos: Map<string, number>,
    *          ritmo: {puntos: {s: number, ppm: number}[], fallos: number[], sinCorregir: number[],
    *                  duracion: number},
    *          pasadas: {pedida: string, escrita: string, estado: string}[],
@@ -382,14 +419,14 @@ export class Vista {
    *          correcciones: {cuantas: number, mediaMs: number|null}}} resultado
    */
   mostrarResultado({
-    ppm, pulsaciones, correctas, segundos, precision, precisionPalabras, mejorMarca, record, fallos, ritmo, pasadas, sinCorregir, correcciones,
+    ppm, pulsaciones, correctas, segundos, precision, precisionFinal, mejorMarca, record, fallos, ritmo, pasadas, sinCorregir, correcciones,
   }) {
     const r = this.#resultado;
-    r.ppm.textContent = ENTERO.format(ppm);
-    r.pulsaciones.textContent = ENTERO.format(pulsaciones);
+    r.ppm.textContent = cifra(ENTERO, ppm);
+    r.pulsaciones.textContent = cifra(ENTERO, pulsaciones);
     r.tiempo.textContent = SEGUNDOS.format(segundos);
-    r.precision.textContent = precision === null ? '—' : PORCENTAJE.format(precision);
-    r.precisionFinal.textContent = precisionPalabras === null ? '—' : PORCENTAJE.format(precisionPalabras);
+    r.precision.textContent = cifra(PORCENTAJE, precision);
+    r.precisionFinal.textContent = cifra(PORCENTAJE, precisionFinal);
     r.marca.textContent = mejorMarca > 0 ? `${ENTERO.format(mejorMarca)} palabras/min` : '—';
     r.record.hidden = !record;
     r.corregidos.textContent = ENTERO.format(correcciones.cuantas);
@@ -415,14 +452,17 @@ export class Vista {
     this.#palabra.hidden = true;
     r.panel.hidden = false;
     this.#informe.hidden = false;
-    this.#boton.focus();
+    r.titulo.focus();
 
     const detalle = precision === null ? ''
       : `, precisión real del ${PORCENTAJE.format(precision)}`
-        + (precisionPalabras === null ? '' : ` y final del ${PORCENTAJE.format(precisionPalabras)}`);
+        + (precisionFinal === null ? '' : ` y final del ${PORCENTAJE.format(precisionFinal)}`);
+    const velocidad = ppm === null
+      ? 'prueba demasiado corta para medir la velocidad'
+      : `${ENTERO.format(ppm)} palabras por minuto, ${ENTERO.format(pulsaciones)} pulsaciones por minuto`;
     this.anunciar(
       `Prueba detenida. ${textoCorrectas(correctas)} en ${SEGUNDOS.format(segundos)}: `
-      + `${ENTERO.format(ppm)} palabras por minuto, ${ENTERO.format(pulsaciones)} pulsaciones por minuto${detalle}.${record ? ' Nueva mejor marca.' : ''}`
+      + `${velocidad}${detalle}.${record ? ' Nueva mejor marca.' : ''}`
       + (precision === null ? '' : ` ${resumen}`)
       + (corregidas.length === 0 ? '' : ` Corregidas: ${listaAcotada(corregidas, PALABRAS_EN_RESUMEN)}.`)
       + (pendientes.length === 0 ? '' : ` Sin corregir: ${listaAcotada(pendientes, PALABRAS_EN_RESUMEN)}.`),
