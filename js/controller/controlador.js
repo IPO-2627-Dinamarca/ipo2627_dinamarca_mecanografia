@@ -3,8 +3,8 @@ import { guardarMejorMarca, leerMejorMarca } from '../model/almacen.js';
 // El modelo mide el tiempo; el intervalo solo repinta. Se refresca varias veces por
 // segundo para que el cambio de cifra llegue sin retraso apreciable.
 const REFRESCO_MS = 200;
-// Con pocos segundos un solo acierto dispara las PPM: no se muestran en vivo ni cuentan
-// como mejor marca hasta pasado este tiempo.
+// Con pocos segundos un solo acierto dispara las PPM: no se muestran en el resultado ni
+// cuentan como mejor marca hasta pasado este tiempo.
 const PPM_DESDE_MS = 5000;
 // Tras acabar, no se puede volver a empezar hasta pasado este tiempo: así la última
 // pulsación no relanza la prueba sin dejar ver el resultado.
@@ -76,18 +76,17 @@ export class Controlador {
     // Los marcadores quedan con el valor final y no con el del último tic.
     this.#refrescarMarcadores();
 
-    const { correctas, milisegundos, precision, precisionFinal, fallosPorTecla, pasadas, sinCorregir, correcciones } = this.#modelo;
+    const { correctas, milisegundos, precision, precisionFinal, fallosPorTecla, pasadas } = this.#modelo;
     const medible = milisegundos >= PPM_DESDE_MS;
     const ppm = medible ? Math.round(this.#modelo.palabrasPorMinuto) : null;
-    const pulsaciones = medible ? Math.round(this.#modelo.pulsacionesPorMinuto) : null;
     const record = medible && correctas > 0 && ppm > this.#mejorMarca;
     if (record) {
       this.#mejorMarca = ppm;
       guardarMejorMarca(ppm);
     }
     this.#vista.mostrarResultado({
-      ppm, pulsaciones, correctas, segundos: milisegundos / 1000, precision, precisionFinal, mejorMarca: this.#mejorMarca, record,
-      fallos: fallosPorTecla, ritmo: this.#modelo.ritmo(PPM_DESDE_MS), pasadas, sinCorregir, correcciones,
+      ppm, correctas, segundos: milisegundos / 1000, precision, precisionFinal, mejorMarca: this.#mejorMarca, record,
+      fallos: fallosPorTecla, pasadas,
     });
     this.#bloquearReinicio();
   }
@@ -127,23 +126,15 @@ export class Controlador {
     this.#vista.mostrarPalabra(this.#modelo.palabra, this.#modelo.siguientes);
     this.#refrescarMarcadores();
     if (estado === 'sinCorregir') {
-      this.#vista.avanzarHoja();
       this.#vista.anunciar(`Sin corregir: ${pedida}. ${this.#modelo.palabra}`);
     } else {
-      this.#vista.celebrarAcierto();
       this.#vista.anunciar(this.#modelo.palabra);
     }
   }
 
   #refrescarMarcadores() {
-    const { correctas, segundos, milisegundos, palabrasPorMinuto, pulsacionesPorMinuto, activo, progreso } = this.#modelo;
-    const enMarcha = milisegundos >= PPM_DESDE_MS;
-    this.#vista.mostrarMarcadores({
-      correctas,
-      segundos,
-      ppm: enMarcha ? palabrasPorMinuto : null,
-      pulsaciones: enMarcha ? pulsacionesPorMinuto : null,
-    });
+    const { correctas, segundos, activo, progreso } = this.#modelo;
+    this.#vista.mostrarMarcadores({ correctas, segundos });
     this.#vista.mostrarAvance(activo ? progreso : null);
   }
 }
