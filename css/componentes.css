@@ -107,14 +107,9 @@
     }
   }
 
-  .vista-resultado .selector__opcion {
-    flex: 1;
-  }
-
-  /* En la tira estrecha cada botón cede hasta el ancho de su número: los cinco caben en 11rem */
+  /* En la tira estrecha cada botón cede relleno y los cuatro caben en 11rem sin bajar de 2,75rem */
   @container ajustes (inline-size < 20rem) {
     .selector__opcion {
-      min-inline-size: auto;
       padding-inline: var(--espacio-1);
     }
   }
@@ -129,10 +124,6 @@
 
   .marcador__etiqueta {
     color: var(--tinta-suave);
-
-    & abbr {
-      text-decoration: none;
-    }
   }
 
   .marcador__tope {
@@ -148,41 +139,6 @@
     font-weight: var(--peso-fuerte);
     line-height: 1;
     font-variant-numeric: tabular-nums;
-  }
-
-  /* Escritorio ancho: la fila lleva los cuatro con topes de tres cifras en 44rem, así que nombres y topes
-     bajan un paso */
-  @media (width >= 80rem) {
-    .marcadores :is(.marcador__etiqueta, .marcador__tope) {
-      font-size: var(--paso--1);
-    }
-
-    /* Hasta 1366px de ancho la columna central mide menos de 42rem y las cifras bajan un paso */
-    @container marcadores (inline-size < 42rem) {
-      .marcadores .marcador__valor {
-        font-size: var(--paso-2);
-      }
-    }
-  }
-
-  /* Columna estrecha: cifra a --paso-1 y nombres a --paso--1, como en el detalle */
-  @container principal (inline-size < 30rem) {
-    .marcadores .marcador__valor {
-      font-size: var(--paso-1);
-    }
-
-    .marcadores :is(.marcador__etiqueta, .marcador__tope) {
-      font-size: var(--paso--1);
-    }
-
-    .marcadores .marcador__tope {
-      line-height: 1;
-    }
-  }
-
-  /* Con el resultado abierto la cifra está en la hoja; visibility conserva el alto de la línea */
-  .app:has(.resultado:not([hidden])) .marcador--ritmo {
-    visibility: hidden;
   }
 
   /* Hoja: la superficie más clara, separada de la mesa por el tono. El borde solo se ve en alto contraste. */
@@ -266,7 +222,7 @@
     }
   }
 
-  /* Las siguientes, en la misma letra y cada vez más pequeñas: la hoja que va saliendo */
+  /* La siguiente palabra, en la misma letra y más pequeña */
   .cola {
     margin: 0;
     padding: 0;
@@ -290,16 +246,6 @@
     overflow-x: clip;
     color: var(--guia);
 
-    /* Más pequeñas y más claras cuanto más lejos, sin bajar de 3:1 sobre el papel */
-    &:nth-child(2) {
-      --_cuerpo: var(--paso-2);
-      color: color-mix(in hsl, var(--guia) 80%, var(--papel));
-    }
-
-    &:nth-child(3) {
-      --_cuerpo: var(--paso-1);
-      color: color-mix(in hsl, var(--guia) 72%, var(--papel));
-    }
   }
 
   .letra--pendiente {
@@ -349,26 +295,9 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Las dos unidades apiladas: la de las palabras arriba y la de las pulsaciones, más pequeña, apoyada en la
-     línea base de la cifra */
-  .resultado__unidades {
-    display: grid;
-    min-inline-size: 0;
-  }
-
   .resultado__unidad {
+    min-inline-size: 0;
     color: var(--tinta-suave);
-  }
-
-  .resultado__unidad + .resultado__unidad {
-    font-size: var(--paso--1);
-    line-height: 1.3;
-  }
-
-  .resultado__pulsaciones {
-    font-weight: var(--peso-fuerte);
-    font-variant-numeric: tabular-nums;
-    color: var(--tinta);
   }
 
   /* Hoja escrita: las palabras pasadas, una tras otra; las corregidas con el subrayado del error y las sin corregir
@@ -564,18 +493,6 @@
     font-weight: var(--peso-fuerte);
   }
 
-  /* En móvil el conmutador ya dice «Detalle»: el título queda para el lector de pantalla */
-  @media (width < 48rem) {
-    .informe__titulo {
-      position: absolute;
-      inline-size: 1px;
-      block-size: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
-  }
-
   /* Por debajo de los marcadores: los tres, con unidades («11,8 s», «100 %»), caben en una fila de 18rem */
   .informe__datos .marcador__valor {
     font-size: var(--paso-1);
@@ -587,44 +504,19 @@
     font-weight: var(--peso-fuerte);
   }
 
-  /* En la columna del detalle, nombres y resúmenes a --paso--1 para que quepan las dos filas, la
-     línea de practicar y el teclado sin desplazamiento */
+  /* En la columna del detalle, nombres y resúmenes a --paso--1 para que quepan los datos, la
+     marca y el teclado sin desplazamiento */
   @media (width >= 48rem) {
     .informe__datos .marcador__etiqueta {
       font-size: var(--paso--1);
       white-space: nowrap;
     }
 
-    .ritmo__resumen,
     .fallos__resumen,
-    .informe__marca,
-    .informe__practicar {
+    .informe__marca {
       font-size: var(--paso--1);
       line-height: 1.35;
     }
-
-    .informe__palabra {
-      font-size: var(--paso-0);
-      line-height: 1;
-    }
-  }
-
-  /* La cifra de sin corregir pasa a cinta cuando la vista marca data-cuenta distinto de 0 */
-  .marcador__valor[data-cuenta]:not([data-cuenta="0"]) {
-    color: var(--cinta);
-  }
-
-  .informe__practicar {
-    max-inline-size: var(--medida);
-    font-size: var(--paso--1);
-    color: var(--tinta-suave);
-  }
-
-  .informe__palabra {
-    font-family: var(--fuente-hoja);
-    font-size: var(--paso-0);
-    font-weight: var(--peso-fuerte);
-    color: var(--tinta);
   }
 
   .fallos__resumen {
@@ -670,8 +562,7 @@
 
       & .cabecera,
       & .ajustes,
-      & .ayuda,
-      & .cola__palabra:nth-child(n + 2) {
+      & .ayuda {
         display: none;
       }
 
@@ -686,43 +577,6 @@
       & .hoja {
         --cuerpo-max: 3.25rem;
         padding-block: var(--espacio-2);
-      }
-    }
-  }
-
-  /* Pantallas estrechas y muy bajas (320 × 568) antes de empezar: límites en tiras sin nombre, título más
-     pequeño, huecos recogidos, sin cola ni ayuda a la vista, para que el inicio quepa sin desplazarse. Los
-     nombres quedan para el lector de pantalla. */
-  @media (width < 30rem) and (height < 36rem) {
-    .app:not([data-estado="activo"]) {
-      --respiro: 2dvh;
-
-      & .cabecera__titulo {
-        font-size: var(--paso-2);
-      }
-
-      & .selector__titulo,
-      & .controles__etiqueta,
-      & .ayuda--parado {
-        position: absolute;
-        inline-size: 1px;
-        block-size: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
-      }
-
-      & .ajustes {
-        row-gap: var(--espacio-1);
-      }
-
-      & .cola {
-        block-size: 0;
-      }
-
-      & .ayuda--activo,
-      & .controles__error {
-        display: none;
       }
     }
   }
@@ -750,59 +604,15 @@
       transition: translate 100ms var(--curva);
     }
 
-    /* El golpe del tipo: la cifra sube y vuelve, sin cambiar de color */
-    .marcador__valor--golpe {
-      animation: golpe var(--golpe) var(--curva);
-    }
-
-    @keyframes golpe {
-      from { transform: translateY(-0.15em); }
-    }
-
-    /* Al acertar, la palabra y la cola suben desde la línea de abajo y entra una nueva al final */
-    .hoja--avanza :is(.muestra, .cola__palabra) {
-      animation: avanza var(--avance) var(--curva);
-    }
-
-    .hoja--avanza .cola__palabra:last-child {
-      animation-name: entra;
-    }
-
-    @keyframes avanza {
-      from { translate: 0 0.6em; opacity: 0.4; }
-    }
-
-    @keyframes entra {
-      from { translate: 0 0.6em; opacity: 0; }
-    }
-
     /* Resultado y detalle entran desde @starting-style porque pasan de display: none a visibles */
     .resultado,
-    .escrita,
-    .informe__titulo,
-    .informe__datos,
-    .ritmo,
-    .fallos,
-    .teclado__fila {
+    .informe {
       transition: opacity var(--entrada) var(--curva), transform var(--entrada) var(--curva);
     }
 
-    .escrita,
-    .informe__datos { transition-delay: var(--escalon); }
-    .ritmo { transition-delay: calc(var(--escalon) * 2); }
-    .fallos { transition-delay: calc(var(--escalon) * 3); }
-    .teclado__fila:nth-child(1) { transition-delay: calc(var(--escalon) * 4); }
-    .teclado__fila:nth-child(2) { transition-delay: calc(var(--escalon) * 5); }
-    .teclado__fila:nth-child(3) { transition-delay: calc(var(--escalon) * 6); }
-
     @starting-style {
       .resultado,
-      .escrita,
-      .informe__titulo,
-      .informe__datos,
-      .ritmo,
-      .fallos,
-      .teclado__fila {
+      .informe {
         opacity: 0;
         transform: translateY(var(--espacio-2));
       }
@@ -839,8 +649,7 @@
       outline-width: 2px;
     }
 
-    /* nth-child(n) iguala la especificidad de la 2.ª y la 3.ª palabra */
-    .cola__palabra:nth-child(n) {
+    .cola__palabra {
       color: var(--tinta-suave);
     }
   }
