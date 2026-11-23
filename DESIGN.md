@@ -8,6 +8,7 @@ aquí se pide es implementable con HTML, CSS y JS nativos, sin librerías, sin C
 
 Cambios pedidos después del rediseño. Donde chocan con las secciones de abajo, mandan estos; el resto del
 documento sigue vigente.
+La revisión 7 (2026-11-23) simplifica la interfaz y sustituye varias de estas decisiones; se indica allí cuáles.
 
 - **Sin foto.** Se retiran la lámina, la foto de la M40 y su crédito (secciones 4.1, 4.2, 5.9 y 6, y las filas
   de la lámina en 8 y 9). La página es una sola columna de 44rem como máximo, centrada y anclada arriba, en todos
@@ -213,6 +214,55 @@ tarda en corregir; lo que no se corrige es el fallo grave que hay que practicar.
 - Forced-colors: las corregidas solo con el subrayado ondulado y las sin corregir con tachado y recuadro, sin fondo
   `Mark` en ninguna, para que se distingan por la forma; en el teclado de fallos el nivel se marca también con el
   grosor del borde (1 a 4px) sin cambiar el tamaño del círculo.
+
+### Revisión del 2026-11-23 (7): interfaz simplificada
+
+Pedida por el usuario: la página se veía demasiado compleja. Se quita lo que no hace falta para cumplir el enunciado
+y se conserva el modo Libre/Estricto. Donde esta revisión choca con las anteriores, manda esta; las secciones 1 a 12
+describen el diseño anterior y solo valen en lo que aquí no se toca.
+
+Criterios: Nielsen, heurística 8 (diseño estético y minimalista: nada que compita con lo que importa, que es la
+palabra y el tiempo); Simpson, no cargar la memoria de trabajo (menos cifras y menos opciones a la vez); ley de
+Hick (el tiempo de decidir crece con el número de opciones: de doce botones de límite se pasa a seis); y la pauta de
+evitar textos animados, porque una cifra o una palabra que se mueve mientras se escribe distrae.
+
+Se quita:
+
+- Gráfica de ritmo (`figure.ritmo`, `css/ritmo.css`, sus nodos SVG y el cálculo `ritmo()` del modelo).
+- Límite por palabras, la opción ∞ y la regla «acaba con el primero». Queda un solo límite, los segundos: 15, 30, 60
+  (por defecto) o 120. Con ello el modelo ya no tiene límite de palabras y `progreso` es solo el tiempo. Resuelve F6.
+- Durante la prueba solo se ven las correctas y los segundos («de 60 segundos»). Se retiran las velocidades en vivo.
+- Pulsaciones por minuto («ppm»): el resultado da solo palabras por minuto. Se retira `pulsacionesPorMinuto`.
+- Del detalle: corregidos, «por corrección» (y el tiempo de cada corrección en el modelo) y el contador «sin
+  corregir». Quedan tiempo, precisión real, precisión final, mejor marca y teclado de fallos. La hoja escrita sigue
+  marcando las corregidas y las sin corregir; estas últimas se anuncian en un párrafo oculto a la vista.
+- «Para practicar».
+- El conmutador Hoja/Detalle del móvil. En móvil el detalle va debajo de la hoja y los marcadores siguen a la vista
+  con el resultado, así que se ven las correctas. Resuelve F2.
+- Las animaciones de texto: el golpe del contador, la subida de la hoja al acertar y la entrada escalonada del
+  detalle. Desaparecen los tokens `--escalon`, `--golpe` y `--avance`.
+- La cola de tres palabras: ahora es una sola siguiente (`EN_COLA = 1`), en `--guia` y a `--paso-3`.
+- Las palabras raras: `palabras.json` solo tiene `comunes` (5 000, de 2 a 12 letras) y pasa de unos 646 KB a unos
+  53 KB. Las mayúsculas se quedan (una de cada cinco). Con las raras se va el diccionario de LibreOffice y su
+  licencia; queda solo FrequencyWords (MIT).
+- El bloque especial de 320 × 568 sin empezar.
+
+Se cambia: el grupo de duración se llama «Segundos» y sus botones llevan solo el número (con «15 s» desbordaba a
+1024 px); el fieldset exterior se llama «Ajustes»; la nota explica los dos modos («Libre: Espacio pasa siempre; lo
+que no corrijas cuenta como fallo grave. Estricto: no pasa hasta que la palabra esté bien.»). El anuncio final para
+el lector de pantalla es más corto: correctas, tiempo en segundos, palabras por minuto, las dos precisiones y, si se
+bate, la nueva mejor marca; las teclas con fallos están en el pie del teclado.
+
+Se conserva: el modo Libre/Estricto, las dos precisiones (la final por letras, nunca menor que la real), el reloj
+desde la primera tecla, «—» con menos de 5 s, la espera de 5 s y relanzar solo con Intro, Espacio con el campo al
+tope, el cursor fijo al final, el cursor deslizante, el rodillo de progreso, el fundido del resultado, la hoja
+escrita en tres niveles, el teclado de fallos con ⇧ y ´, el modo foco y el modo compacto de menos de 36rem de alto.
+`css/componentes.css` baja de 961 a unas 775 líneas.
+
+Sustituye en particular a: los límites de la sección 0 y de la revisión 3 (grupos Segundos y Palabras, nota de
+«el primero que se cumpla»); la cola de tres de la sección 0; la gráfica y el detalle de las revisiones 3 y 4; las
+pulsaciones por minuto, el conmutador de móvil, el bloque de 320 × 568 y las palabras raras de la revisión 5; y
+las medidas de las tablas de las revisiones 2 y 3, que ya no corresponden a esta pantalla.
 
 ### Revisión del 2026-11-22 (6): métricas y fallos
 
